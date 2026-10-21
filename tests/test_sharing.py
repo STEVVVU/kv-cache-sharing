@@ -1,7 +1,7 @@
 import copy
 import unittest
 import torch
-from transformers import Qwen3Config, Qwen3ForCausalLM
+from transformers import DynamicCache, Qwen3Config, Qwen3ForCausalLM
 from kvshare import Sharing, cka, calibrate, validate_map, unique_cache_bytes, trainable_consumers, distill_loss, pareto
 
 
@@ -34,6 +34,29 @@ class SharingTest(unittest.TestCase):
             actual = self.model(self.ids).logits
             route.close()
         torch.testing.assert_close(actual, expected, rtol=0, atol=0)
+
+    def test_calibration_fills_requested_capacity(self):
+        torch.manual_seed(7)
+        model = Qwen3ForCausalLM(self.model.config).eval()
+        mapping, history = calibrate(model, {'input_ids': self.ids}, 2)
+        self.assertEqual(len(mapping), 2)
+        self.assertEqual(len(history), 2)
+        validate_map(mapping, 4)
+
+    def test_caller_supplied_empty_cache(self):
+        route = Sharing(self.model, {1: 0, 3: 2})
+        try:
+            with torch.no_grad():
+                expected = self.model(self.ids, use_cache=True)
+                cache = DynamicCache()
+                prefix = self.model(self.ids[:, :3], past_key_values=cache, use_cache=True)
+                self.assertIs(prefix.past_key_values, cache)
+                self.assertIs(cache.layers[0], cache.layers[1])
+                decoded = self.model(self.ids[:, 3:], past_key_values=cache, use_cache=True)
+                torch.testing.assert_close(decoded.logits[:, -1], expected.logits[:, -1], rtol=1e-5, atol=1e-6)
+                self.assertEqual(cache.get_seq_length(), 4)
+        finally:
+            route.close()
 
     def test_cache_alias_and_prefill_decode(self):
         with torch.no_grad():

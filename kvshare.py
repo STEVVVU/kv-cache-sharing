@@ -2,6 +2,7 @@
 import argparse
 import copy
 import json
+from itertools import groupby
 from pathlib import Path
 import time
 import types
@@ -60,7 +61,10 @@ class Sharing:
                 k, v = route.states[p]
                 q, _ = apply_rotary_pos_emb(q, k[..., -shape[-1]:, :], cos, sin)
                 if past_key_values is not None:
-                    past_key_values.layers[i] = past_key_values.layers[p]
+                    if i == len(past_key_values.layers):
+                        past_key_values.layers.append(past_key_values.layers[p])
+                    else:
+                        past_key_values.layers[i] = past_key_values.layers[p]
             else:
                 k = attn.k_norm(attn.k_proj(hidden_states).view(heads)).transpose(1, 2)
                 v = attn.v_proj(hidden_states).view(heads).transpose(1, 2)
@@ -114,6 +118,11 @@ def calibrate(model, inputs, count):
             for c in range(1, len(model.model.layers)):
                 p = c - 1
                 if c in used or p in used:
+                    continue
+                # Keep enough disjoint adjacent pairs to fill the requested map.
+                free_layers = [i not in used | {c, p} for i in range(len(model.model.layers))]
+                capacity = sum(len(list(run)) // 2 for free, run in groupby(free_layers) if free)
+                if capacity < count - len(mapping) - 1:
                     continue
                 values = []
                 for x, y in zip(route.states[c], route.states[p]):

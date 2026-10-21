@@ -17,7 +17,7 @@ The last command requires locally cached public `Qwen/Qwen3-0.6B` safetensors at
 
 The underlying command is `python -m kvshare experiment --device cuda --steps 4 --pairs 2 --output evidence/pretrained.json`. Steps are bounded to 1..20 and pairs to 1..4 for this small experiment. The verification driver imposes a 600-second process timeout; the training loop also checks a 540-second budget. Use the driver for the full bounded run.
 
-Outputs are `evidence/pretrained.json`, driver transcripts and an ignored `checkpoints/consumer.safetensors` containing only trainable consumer parameters. Every run replaces that local checkpoint. No persistent service is started. Process exit releases GPU allocations and leaves the evidence intact.
+Outputs are `evidence/pretrained.json`, driver transcripts and an ignored `checkpoints/consumer.safetensors` containing only trainable consumer parameters. Every run replaces that local checkpoint. No persistent service is started. Process exit releases GPU allocations and leaves the evidence intact. The recorded CUDA result, including raw generations, is retained in [docs/results/pretrained-2026-10-21.json](docs/results/pretrained-2026-10-21.json).
 
 ## Course and mechanism map
 
@@ -26,7 +26,7 @@ Outputs are `evidence/pretrained.json`, driver transcripts and an ignored `check
 | Report concept | Code and actual behavior |
 |---|---|
 | Sections 4.2–4.3 linear CKA | `cka`, `calibrate` flatten actual post-RoPE key/value activations over batch and sequence, remove padding, center features and use the minimum of K-CKA and V-CKA. Gram computation is algebraically equivalent to linear CKA. |
-| Section 4.4 iterative map | Re-run the currently shared student after every greedy choice, score remaining adjacent pairs, select consumer → previous producer. Validation rejects chains and fan-out. |
+| Section 4.4 iterative map | Re-run the currently shared student after every greedy choice, score remaining adjacent pairs, select consumer → previous producer. Validation rejects chains and fan-out. Selection preserves enough remaining adjacency capacity to fill the requested map, an additional constraint for dense maps. |
 | Actual sharing | `Sharing` skips consumer K/V projections and reads producer tensors. With DynamicCache, producer and consumer layer entries are the same object; producers update once per forward. |
 | Section 4.5 trainable subset | Only consumer query projection, query norm, block layer norms and MLP train. K/V/output projections, unused key norm, other layers, embeddings and head remain frozen. |
 | Section 4.5 objective | `T² KL(teacher || student) + α hidden_MSE`, T=2 and α=0.1. A frozen pretrained teacher supplies logits and intermediate hidden state 27 in the recorded run. Padding is excluded. |
@@ -52,7 +52,7 @@ Distillation slightly reduced fixture teacher KL and NLL relative to untrained C
 
 ## Verification and limits
 
-Six CPU tests pass. They cover CKA rotation/scale/translation invariance, map constraints, exact independent-attention logit parity, skipped K/V projections, cache alias/storage reduction, causal future exclusion, prefill versus cached decode, independent batches, left padding, consumer-window prefill/decode, finite loss, frozen teacher/nonconsumer weights and changed consumer weights. A tokenless CPU workflow is supplied; it has not run on GitHub. Local `compileall` is the syntax check; no project linter or type checker existed to reuse.
+Eight CPU tests pass. They cover CKA rotation/scale/translation invariance, map constraints and full-capacity selection, exact independent-attention logit parity, skipped K/V projections, cache alias/storage reduction, causal future exclusion, prefill versus cached decode, caller-supplied empty DynamicCache, independent batches, left padding, consumer-window prefill/decode, finite loss, frozen teacher/nonconsumer weights and changed consumer weights. A tokenless CPU workflow is supplied; it has not run on GitHub. Local `compileall` is the syntax check; no project linter or type checker existed to reuse.
 
 The public library currently supports this pinned Qwen3 eager-attention API and greedy generation with DynamicCache. Beam cache reordering, static/offloaded caches, distributed serving, other model families and compiled attention are unverified. The window ablation retains full producer storage. Student K/V weights remain loaded but are not computed for consumers; the saving measured here is KV state, not model-weight compression.
 

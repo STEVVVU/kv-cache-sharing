@@ -1,8 +1,11 @@
 name: CPU correctness
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -12,3 +15,8 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python tools/verify.py doctor
       - run: python tools/verify.py drive
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpu-verification
+          path: evidence/*-driver.json
