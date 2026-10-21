@@ -1,0 +1,6 @@
+{
+  "calibration": ["A red box contains three blue pens. Count the pens.", "Water freezes when its temperature falls below zero degrees Celsius."],
+  "train": ["The orchard has four rows of five apple trees. There are twenty trees.", "A triangle has three sides and three angles.", "Mira reads a book and then writes a short summary of its story.", "A train travels sixty miles in one hour. Its speed is sixty miles per hour."],
+  "heldout": ["Seven birds sit on a branch. Two fly away. Five birds remain.", "A copper wire conducts electricity because electrons can move through the metal."],
+  "generation": "Complete the sentence: The capital of France is"
+}

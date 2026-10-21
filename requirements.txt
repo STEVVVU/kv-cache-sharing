@@ -1,0 +1,4 @@
+torch==2.11.0
+transformers==5.20.2
+safetensors==0.8.0
+huggingface-hub==2.2.0

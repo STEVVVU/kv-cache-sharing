@@ -1,0 +1,11 @@
+KV cache sharing
+Copyright 2026 Steven Vu
+
+The Qwen3 attention routing in kvshare.py adapts the computation sequence and
+public primitives of Hugging Face Transformers modeling_qwen3.py, v5.20.2.
+Upstream copyright 2025 The Qwen team, Alibaba Group and the HuggingFace Inc. team.
+Transformers is Apache License 2.0; see LICENSE.
+https://github.com/huggingface/transformers/blob/v5.20.2/src/transformers/models/qwen3/modeling_qwen3.py
+
+KVAlign concepts are attributed to Ray Wan and Keagan Chern, Berkeley CS262A
+Fall 2025. No student implementation or report text is redistributed.
