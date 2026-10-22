@@ -26,4 +26,5 @@ The driver waits for its child; timeout kills that child. No persistent services
 CUDA allocations disappear with child exit. Preserve evidence; checkpoints are ignored local files.
 
 ## Helpers
+The framework adapter, frozen Trainer grid, quality gate and final-test boundary are documented in [features/metrics.md](features/metrics.md). All 30 full candidates passed exact checkpoint/validation replay and failed the fixed quality gate. Selection chose identity/no-sharing for every seed; all five then completed the 2,336-block official test split with full token agreement and zero cache saving. Curated metrics/hashes are in `docs/evidence/wikitext-metrics-20261022/summary.json`. Preserve the seed-11 external scalar-audit failure and numerical-control receipts; no bitwise-logit or downstream quality claim follows.
 `tools/verify.py` is the maintained driver. See `features/README.md` for mapped journeys.

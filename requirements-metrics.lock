@@ -1,0 +1,13 @@
+# Windows CPython 3.11 extra wheels only.
+# Install with --no-deps --require-hashes after exposing the existing ML runtime read-only.
+accelerate==1.15.0 --hash=sha256:97eacca0b73e45cb867dbf8c5d5d4dc32219544300e0c8992c7334dc2ef33cec
+datasets==5.1.0 --hash=sha256:86fd08b280485aab82894d2c81842c4151d93b575efea0054315104cb7bc3cec
+dill==0.4.1 --hash=sha256:1e1ce33e978ae97fcfcff5638477032b801c46c7c65cf717f95fbc2248f79a9d
+multiprocess==0.70.19 --hash=sha256:928851ae7973aea4ce0eaf330bbdafb2e01398a91518d5c8818802845564f45c
+pyarrow==26.0.0 --hash=sha256:13b0972a3dc71b642050d1bc72664a3916e14f59c943d8c1368154d6e4b0c2d5
+pandas==3.0.6 --hash=sha256:2e5fa32ff162dfdbc280157d664f44d23049ae414725af9676df339c501d82cd
+psutil==7.2.2 --hash=sha256:eb7e81434c8d223ec4a219b5fc1c47d0417b12be7ea866e24fb5ad6e84b3d988
+xxhash==4.0.2 --hash=sha256:c60fa1038814c3c682a8e3b68aeca598e7b90eb4a65d4a48b7e0e6fbae825507
+python-dateutil==3.0.0 --hash=sha256:3c79630202e4152c6add678446984236efe4f57e84d8e892aab0637bab82e9fd
+tzdata==2026.5 --hash=sha256:b683bd1b6659ddcd810ff02ad09ba821d4bf1065072805063eb35c49617905ac
+six==1.17.0 --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274

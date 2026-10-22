@@ -5,6 +5,7 @@
 | Environment | doctor | actual dependency versions and CUDA availability |
 | [Sharing correctness](correctness.md) | drive | no-share parity, causal decode, alias storage, CKA/topology, gradient restrictions |
 | [Pretrained distillation](pretrained.md) | pretrained | pinned real generation, changed consumer weights, held-out KL/NLL/agreement/cache bytes |
+| [Trainer quality study](metrics.md) | tools/trainer_metrics.py | all 30 candidate replays passed, all gates failed; five frozen identity decisions each evaluated all 2,336 test blocks, zero saving |
 
 ## Sub-features
 Calibration, cache sharing, distillation and memory-quality policy comparison.

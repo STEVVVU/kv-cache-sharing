@@ -1,5 +1,8 @@
 __pycache__/
 *.pyc
 evidence/
+!/docs/evidence/
+!/docs/evidence/**
 checkpoints/
 .venv/
+.metrics-venv/
