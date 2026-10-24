@@ -95,12 +95,34 @@ class Sharing:
 
 def unique_cache_bytes(cache):
     storages = {}
+
+    def tensors(value):
+        if isinstance(value, torch.Tensor):
+            yield value
+        elif isinstance(value, (tuple, list)):
+            for child in value:
+                yield from tensors(child)
+        elif isinstance(value, dict):
+            for key, child in value.items():
+                yield from tensors(key)
+                yield from tensors(child)
+
     for layer in cache.layers:
-        for tensor in (layer.keys, layer.values):
-            if tensor is not None:
+        for name in ("keys", "values", "_quantized_keys", "_quantized_values", "_pending_beam_idx"):
+            for tensor in tensors(getattr(layer, name, None)):
                 storage = tensor.untyped_storage()
-                storages[(tensor.device, storage.data_ptr())] = storage.nbytes()
+                key = (tensor.device, storage.data_ptr(), storage.nbytes())
+                storages[key] = storage.nbytes()
     return sum(storages.values())
+
+
+def new_hqq_cache(config, nbits):
+    """Create a native Transformers HQQ cache with the study's fixed policy."""
+    if nbits not in (4, 8):
+        raise ValueError("HQQ cache supports only the fixed 4-bit and 8-bit candidates")
+    from transformers import QuantizedCache
+    return QuantizedCache(backend="hqq", config=config, nbits=nbits, axis_key=1, axis_value=1,
+                          q_group_size=64, residual_length=32)
 
 
 def calibrate(model, inputs, count):

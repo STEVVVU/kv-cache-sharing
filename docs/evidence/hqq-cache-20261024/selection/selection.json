@@ -1,0 +1,110 @@
+{
+  "status": "frozen",
+  "action": "select",
+  "started_at_utc": "2026-10-24T19:45:16.008250+00:00",
+  "selected": "hqq8",
+  "selected_nbits": 8,
+  "selection_basis": "lowest measured validation persistent bytes among passing HQQ candidates",
+  "validation_path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\hqq-b4-validation-20261024-a",
+  "validation_receipts": {
+    "result.json": "5e53fee6e7e52a699427e9f5ff2a6ce29f0c4767cb9ba594ceb8578700df5075",
+    "identity-metrics.json": "5157742727be0be5731edb71f5fb5eaf6784c7103ac17cd764a246915056d9b6",
+    "identity-blocks.jsonl": "95770b59af77f1abd37e37a52e2dafbccbb0794cc543391990172451b44359b6",
+    "hqq8-metrics.json": "7c46b5ce5af4a18aa13fd7f27199afc4e75759fac8a116840fb4d4c40d79f8df",
+    "hqq8-blocks.jsonl": "ce821831b82c49e68e3bc9b23da5752c15f557c131f0665929e12c475703c085",
+    "hqq4-metrics.json": "41511a2367d69b21b2bbdad744c4c134203466b10e1e00ce883ee5cef9d34017",
+    "hqq4-blocks.jsonl": "12ce076a68dbc2201f1cc7a933e48ea2fae358be87804fabfb0ff55549fdcb1d"
+  },
+  "policy_config": {
+    "identity": {
+      "cache": "DynamicCache"
+    },
+    "hqq8": {
+      "cache": "QuantizedCache",
+      "backend": "hqq",
+      "nbits": 8,
+      "axis_key": 1,
+      "axis_value": 1,
+      "q_group_size": 64,
+      "residual_length": 32
+    },
+    "hqq4": {
+      "cache": "QuantizedCache",
+      "backend": "hqq",
+      "nbits": 4,
+      "axis_key": 1,
+      "axis_value": 1,
+      "q_group_size": 64,
+      "residual_length": 32
+    }
+  },
+  "schedule": {
+    "batch_size": 4,
+    "validation_batches": 32,
+    "confirmatory_batches": 64,
+    "prefill_tokens": 64,
+    "single_token_updates": 64,
+    "whole_nll_targets": 127,
+    "whole_kl_positions": 128,
+    "decode_nll_targets": 63,
+    "decode_kl_positions": 64,
+    "cache_snapshot_lengths": [
+      64,
+      95,
+      96,
+      97,
+      127,
+      128
+    ]
+  },
+  "source_sha256": {
+    "kvshare.py": "7d9c6138e40aff4c7ab2c8bdca87ba1cfafad48b68c1d6e08a4f44c1601029ba",
+    "tools\\quantized_metrics.py": "d1de0653556906827fc5753bbc0f4a792ca29e3680eab81d3251ada7b8c4ec17"
+  },
+  "model_identity": {
+    "revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "files": {
+      "config.json": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
+      "model.safetensors": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+      "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "tokenizer_config.json": "d5d09f07b48c3086c508b30d1c9114bd1189145b74e982a265350c923acd8101"
+    }
+  },
+  "runtime": {
+    "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.20.2",
+    "hqq": "0.2.8.post1",
+    "device": "cuda:0",
+    "dtype": "torch.bfloat16",
+    "cuda_build": "12.8",
+    "device_name": "NVIDIA GeForce RTX 5080 Laptop GPU",
+    "device_capability": [
+      12,
+      0
+    ],
+    "total_device_bytes": 17094475776
+  },
+  "data_provenance_sha256": "6fd361acd97cee8b75600d67795b5b7a4271adfb8d5d8be1137703aef7501073",
+  "prepared_validation_sha256": {
+    "validation\\data-00000-of-00001.arrow": "76ea26cd79bee9fe8d8899c56f047b064b5a7c61b849bfb05a187a85ff1f621e",
+    "validation\\dataset_info.json": "f705c5bde9af03fc9c361b01692fc1a49b795df7e43ddd41adde419b589722cb",
+    "validation\\state.json": "dbd5b52f92745eede6a3334290f0b58027b1749056adb2da6e304b742252b7d0"
+  },
+  "gates": {
+    "whole_nll_increase": 0.02,
+    "whole_teacher_kl": 0.02,
+    "decode_nll_increase": 0.02,
+    "decode_teacher_kl": 0.02
+  },
+  "validation_block_range": [
+    0,
+    128
+  ],
+  "confirmatory_block_range": [
+    128,
+    384
+  ],
+  "created_at_utc": "2026-10-24T19:45:16.136251+00:00",
+  "confirmatory_evaluated": false
+}

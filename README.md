@@ -2,6 +2,10 @@
 
 An executable implementation of adjacent inter-layer KV sharing and consumer-only self-distillation for pretrained Qwen3. It runs actual PyTorch attention and aliases actual Transformers cache storage. It is not an array simulator.
 
+## Native HQQ cache study
+
+On 256 held WikiText-2 validation blocks, the selected native Transformers HQQ 8-bit cache had mean whole-block NLL increase `0.0006791` and teacher KL `0.0018341`. The corresponding decode means were `0.0013689` NLL increase and `0.0036682` KL, below the study's `0.02` mean gates. At batch size four and sequence length 128, measured persistent cache storage was 31,195,136 bytes versus 58,720,256 bytes for the identity cache, a 46.875% reduction. These are fixed-input teacher-forced means; some individual blocks exceeded the NLL threshold. This does not establish equivalence, generated-text quality, throughput, total GPU memory savings, training improvement, or a new quantizer. See the [full HQQ report and receipts](docs/results/hqq-cache-2026-10-24.md).
+
 ## Run
 
 Python 3.11+, `requirements.txt`. The tested Windows environment uses Python 3.11.9, PyTorch 2.11.0+cu128, Transformers 5.20.2, safetensors 0.8.0 and huggingface-hub 2.2.0. No dependency changes were made to that environment.
@@ -69,7 +73,7 @@ Selection chose **identity/no-sharing for all five seeds before any test evaluat
 
 ## Verification and limits
 
-Eight CPU tests pass. They cover CKA rotation/scale/translation invariance, map constraints and full-capacity selection, exact independent-attention logit parity, skipped K/V projections, cache alias/storage reduction, causal future exclusion, prefill versus cached decode, caller-supplied empty DynamicCache, independent batches, left padding, consumer-window prefill/decode, finite loss, frozen teacher/nonconsumer weights and changed consumer weights. A tokenless CPU workflow is supplied; it has not run on GitHub. Local `compileall` is the syntax check; no project linter or type checker existed to reuse.
+Twenty-seven CPU tests pass in the installed study environment, including the published HQQ receipt check, relocation and tampering regressions, and CPU HQQ schedule tests. The maintained coursework environment passes 24 tests and skips three optional HQQ backend tests. The GitHub Actions workflow runs the maintained `doctor` and `drive` commands, but no remote CI result was checked for this publication change. Local `compileall` is the syntax check; no project linter or type checker existed to reuse.
 
 The public library currently supports this pinned Qwen3 eager-attention API and greedy generation with DynamicCache. Beam cache reordering, static/offloaded caches, distributed serving, other model families and compiled attention are unverified. The window ablation retains full producer storage. Student K/V weights remain loaded but are not computed for consumers; the saving measured here is KV state, not model-weight compression.
 

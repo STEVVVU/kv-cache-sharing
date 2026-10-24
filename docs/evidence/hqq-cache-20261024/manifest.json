@@ -1,0 +1,82 @@
+{
+  "study_source": {
+    "validation": "evidence/hqq-b4-validation-20261024-a",
+    "selection": "evidence/hqq-b4-selection-20261024-a",
+    "confirmatory": "evidence/hqq-b4-confirmatory-20261024-a"
+  },
+  "line_endings": "All published JSON and JSONL files use LF. raw_sha256 hashes the untouched source bytes; canonical_sha256 hashes the published copy.",
+  "files": {
+    "validation/hqq4-blocks.jsonl": {
+      "source": "evidence/hqq-b4-validation-20261024-a/hqq4-blocks.jsonl",
+      "raw_sha256": "12ce076a68dbc2201f1cc7a933e48ea2fae358be87804fabfb0ff55549fdcb1d",
+      "source_line_endings": "CRLF",
+      "canonical_sha256": "796575c2f35094f35f58b69c32d76230aa4d3917495ea579bf5ba8ccb427a997"
+    },
+    "validation/hqq4-metrics.json": {
+      "source": "evidence/hqq-b4-validation-20261024-a/hqq4-metrics.json",
+      "raw_sha256": "41511a2367d69b21b2bbdad744c4c134203466b10e1e00ce883ee5cef9d34017",
+      "source_line_endings": "CRLF",
+      "canonical_sha256": "ed2216cf0f7f53fbda2ea96c3a31e5d6fdd9e5b391ac73e343c9d1840ddecaad"
+    },
+    "validation/hqq8-blocks.jsonl": {
+      "source": "evidence/hqq-b4-validation-20261024-a/hqq8-blocks.jsonl",
+      "raw_sha256": "ce821831b82c49e68e3bc9b23da5752c15f557c131f0665929e12c475703c085",
+      "source_line_endings": "CRLF",
+      "canonical_sha256": "4e472f763b14fac6bc42b32eefced4db87ea2d10b9158a3d6460033b96e5ec5d"
+    },
+    "validation/hqq8-metrics.json": {
+      "source": "evidence/hqq-b4-validation-20261024-a/hqq8-metrics.json",
+      "raw_sha256": "7c46b5ce5af4a18aa13fd7f27199afc4e75759fac8a116840fb4d4c40d79f8df",
+      "source_line_endings": "CRLF",
+      "canonical_sha256": "cf017b35d1fae1cfd619d8dbf7c3d943557b15297c1a69f3820bb9b14ff7f57d"
+    },
+    "validation/identity-blocks.jsonl": {
+      "source": "evidence/hqq-b4-validation-20261024-a/identity-blocks.jsonl",
+      "raw_sha256": "95770b59af77f1abd37e37a52e2dafbccbb0794cc543391990172451b44359b6",
+      "source_line_endings": "CRLF",
+      "canonical_sha256": "1d6c334aee953b9cc4e7192099b36fe1f6cc54e9631411dffb4638ccab02d702"
+    },
+    "validation/identity-metrics.json": {
+      "source": "evidence/hqq-b4-validation-20261024-a/identity-metrics.json",
+      "raw_sha256": "5157742727be0be5731edb71f5fb5eaf6784c7103ac17cd764a246915056d9b6",
+      "source_line_endings": "CRLF",
+      "canonical_sha256": "aadee8453438b6d23ed66023c1a3df6802d3b355de737a01bb9e31da33112cc8"
+    },
+    "validation/result.json": {
+      "source": "evidence/hqq-b4-validation-20261024-a/result.json",
+      "raw_sha256": "5e53fee6e7e52a699427e9f5ff2a6ce29f0c4767cb9ba594ceb8578700df5075",
+      "source_line_endings": "CRLF",
+      "canonical_sha256": "8656c0c9ae7c37ac74a63050a34c8d5c68e523c8d126fd8e0775ab66a746d11f"
+    },
+    "selection/selection.json": {
+      "source": "evidence/hqq-b4-selection-20261024-a/selection.json",
+      "raw_sha256": "600632d7e8603596e8dd01629fd8f6db0c8a7a636ca7ef923661cccdb7d0b7fb",
+      "source_line_endings": "CRLF",
+      "canonical_sha256": "46d9e18de37c2bb69ad77f828cc91e7bbaefc84b3636a7daf56463e7b8330b63"
+    },
+    "confirmatory/confirmatory-attempts.jsonl": {
+      "source": "evidence/hqq-b4-confirmatory-20261024-a/confirmatory-attempts.jsonl",
+      "raw_sha256": "30a63e08623f02bbba9508987bb43feebd94c73855dc10a8bf22180b8bd0d7a1",
+      "source_line_endings": "CRLF",
+      "canonical_sha256": "815ddb36141387ab60d09d2d16151bf4070706be142cf25cb8847abe388a940a"
+    },
+    "confirmatory/confirmatory-blocks.jsonl": {
+      "source": "evidence/hqq-b4-confirmatory-20261024-a/confirmatory-blocks.jsonl",
+      "raw_sha256": "90f0dc705a1138ea812df2a57d48b1a66abbbd10b14151a54c2a9f3c2f6613d6",
+      "source_line_endings": "CRLF",
+      "canonical_sha256": "769692c7ee16000e43da4016a82e620df48b28e40bf088378fdf17770cdd01c4"
+    },
+    "confirmatory/confirmatory-metrics.json": {
+      "source": "evidence/hqq-b4-confirmatory-20261024-a/confirmatory-metrics.json",
+      "raw_sha256": "842de3cefe8530aa929d60642eea95779848dec1fa6d36bfb542a5a450731131",
+      "source_line_endings": "CRLF",
+      "canonical_sha256": "316c966903d0570a6be487423d2d6f888dbcac1459ac6844e88700002316a0a4"
+    },
+    "confirmatory/result.json": {
+      "source": "evidence/hqq-b4-confirmatory-20261024-a/result.json",
+      "raw_sha256": "a5d89852189d374aac2ee76cf619aa7b239b205cdb9f96cb52d6b07fccdf5620",
+      "source_line_endings": "CRLF",
+      "canonical_sha256": "f6351402c41846f263276c949ccfa582f3396e17f8e8014835476c9474734fb3"
+    }
+  }
+}

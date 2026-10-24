@@ -1,0 +1,57 @@
+{
+  "mean_teacher_nll": 3.5112840503381935,
+  "mean_candidate_nll": 4.960841820177374,
+  "mean_teacher_kl": 1.581062763251186,
+  "mean_token_agreement": 0.64697265625,
+  "mean_decode_teacher_nll": 3.1134476807592826,
+  "mean_decode_candidate_nll": 6.035572073927154,
+  "mean_decode_teacher_kl": 3.162125526502372,
+  "mean_decode_token_agreement": 0.2939453125,
+  "whole_nll_increase": 1.4495577698391804,
+  "decode_nll_increase": 2.9221243931678718,
+  "whole_nll_delta_stdev": 0.46613149452091956,
+  "decode_nll_delta_stdev": 0.9396619016532822,
+  "whole_nll_delta_min": 0.38909012433893153,
+  "whole_nll_delta_max": 3.2748740321196212,
+  "decode_nll_delta_min": 0.7843562823975283,
+  "decode_nll_delta_max": 6.601730191733203,
+  "blocks": 128,
+  "persistent_bytes": {
+    "64": 8257536.0,
+    "95": 22478848.0,
+    "96": 12386304.0,
+    "97": 12845056.0,
+    "127": 26607616.0,
+    "128": 16515072.0
+  },
+  "persistent_bytes_per_sequence_derived": {
+    "64": 2064384.0,
+    "95": 5619712.0,
+    "96": 3096576.0,
+    "97": 3211264.0,
+    "127": 6651904.0,
+    "128": 4128768.0
+  },
+  "teacher_persistent_bytes": {
+    "64": 29360128.0,
+    "95": 43581440.0,
+    "96": 44040192.0,
+    "97": 44498944.0,
+    "127": 58261504.0,
+    "128": 58720256.0
+  },
+  "teacher_persistent_bytes_per_sequence_derived": {
+    "64": 7340032.0,
+    "95": 10895360.0,
+    "96": 11010048.0,
+    "97": 11124736.0,
+    "127": 14565376.0,
+    "128": 14680064.0
+  },
+  "batch_size": 4,
+  "batches": 32,
+  "persistent_bytes_scope": "actual total unique tensor storage for the whole batch",
+  "whole_gate_passed": false,
+  "decode_gate_passed": false,
+  "passed": false
+}

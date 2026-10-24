@@ -1,0 +1,1246 @@
+{
+  "action": "confirmatory",
+  "status": "complete",
+  "command": [
+    "tools/quantized_metrics.py",
+    "confirmatory",
+    "--model",
+    "C:\\Users\\steve\\.cache\\huggingface\\hub\\models--Qwen--Qwen3-0.6B\\snapshots\\c1899de289a04d12100db370d81485cdf75e47ca",
+    "--data",
+    "evidence/wikitext-data-20261022-0644",
+    "--device",
+    "cuda",
+    "--selection",
+    "evidence/hqq-b4-selection-20261024-a/selection.json",
+    "--selection-sha256",
+    "600632d7e8603596e8dd01629fd8f6db0c8a7a636ca7ef923661cccdb7d0b7fb",
+    "--output",
+    "evidence/hqq-b4-confirmatory-20261024-a"
+  ],
+  "started_at_utc": "2026-10-24T19:46:02.061542+00:00",
+  "source_sha256": {
+    "kvshare.py": "7d9c6138e40aff4c7ab2c8bdca87ba1cfafad48b68c1d6e08a4f44c1601029ba",
+    "tools\\quantized_metrics.py": "d1de0653556906827fc5753bbc0f4a792ca29e3680eab81d3251ada7b8c4ec17"
+  },
+  "confirmatory_block_range": [
+    128,
+    384
+  ],
+  "gates": {
+    "whole_nll_increase": 0.02,
+    "whole_teacher_kl": 0.02,
+    "decode_nll_increase": 0.02,
+    "decode_teacher_kl": 0.02
+  },
+  "schedule": {
+    "batch_size": 4,
+    "validation_batches": 32,
+    "confirmatory_batches": 64,
+    "prefill_tokens": 64,
+    "single_token_updates": 64,
+    "whole_nll_targets": 127,
+    "whole_kl_positions": 128,
+    "decode_nll_targets": 63,
+    "decode_kl_positions": 64,
+    "cache_snapshot_lengths": [
+      64,
+      95,
+      96,
+      97,
+      127,
+      128
+    ]
+  },
+  "batch_size": 4,
+  "policy_config": {
+    "identity": {
+      "cache": "DynamicCache"
+    },
+    "hqq8": {
+      "cache": "QuantizedCache",
+      "backend": "hqq",
+      "nbits": 8,
+      "axis_key": 1,
+      "axis_value": 1,
+      "q_group_size": 64,
+      "residual_length": 32
+    },
+    "hqq4": {
+      "cache": "QuantizedCache",
+      "backend": "hqq",
+      "nbits": 4,
+      "axis_key": 1,
+      "axis_value": 1,
+      "q_group_size": 64,
+      "residual_length": 32
+    }
+  },
+  "selection_sha256": "600632d7e8603596e8dd01629fd8f6db0c8a7a636ca7ef923661cccdb7d0b7fb",
+  "selection": {
+    "status": "frozen",
+    "action": "select",
+    "started_at_utc": "2026-10-24T19:45:16.008250+00:00",
+    "selected": "hqq8",
+    "selected_nbits": 8,
+    "selection_basis": "lowest measured validation persistent bytes among passing HQQ candidates",
+    "validation_path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\hqq-b4-validation-20261024-a",
+    "validation_receipts": {
+      "result.json": "5e53fee6e7e52a699427e9f5ff2a6ce29f0c4767cb9ba594ceb8578700df5075",
+      "identity-metrics.json": "5157742727be0be5731edb71f5fb5eaf6784c7103ac17cd764a246915056d9b6",
+      "identity-blocks.jsonl": "95770b59af77f1abd37e37a52e2dafbccbb0794cc543391990172451b44359b6",
+      "hqq8-metrics.json": "7c46b5ce5af4a18aa13fd7f27199afc4e75759fac8a116840fb4d4c40d79f8df",
+      "hqq8-blocks.jsonl": "ce821831b82c49e68e3bc9b23da5752c15f557c131f0665929e12c475703c085",
+      "hqq4-metrics.json": "41511a2367d69b21b2bbdad744c4c134203466b10e1e00ce883ee5cef9d34017",
+      "hqq4-blocks.jsonl": "12ce076a68dbc2201f1cc7a933e48ea2fae358be87804fabfb0ff55549fdcb1d"
+    },
+    "policy_config": {
+      "identity": {
+        "cache": "DynamicCache"
+      },
+      "hqq8": {
+        "cache": "QuantizedCache",
+        "backend": "hqq",
+        "nbits": 8,
+        "axis_key": 1,
+        "axis_value": 1,
+        "q_group_size": 64,
+        "residual_length": 32
+      },
+      "hqq4": {
+        "cache": "QuantizedCache",
+        "backend": "hqq",
+        "nbits": 4,
+        "axis_key": 1,
+        "axis_value": 1,
+        "q_group_size": 64,
+        "residual_length": 32
+      }
+    },
+    "schedule": {
+      "batch_size": 4,
+      "validation_batches": 32,
+      "confirmatory_batches": 64,
+      "prefill_tokens": 64,
+      "single_token_updates": 64,
+      "whole_nll_targets": 127,
+      "whole_kl_positions": 128,
+      "decode_nll_targets": 63,
+      "decode_kl_positions": 64,
+      "cache_snapshot_lengths": [
+        64,
+        95,
+        96,
+        97,
+        127,
+        128
+      ]
+    },
+    "source_sha256": {
+      "kvshare.py": "7d9c6138e40aff4c7ab2c8bdca87ba1cfafad48b68c1d6e08a4f44c1601029ba",
+      "tools\\quantized_metrics.py": "d1de0653556906827fc5753bbc0f4a792ca29e3680eab81d3251ada7b8c4ec17"
+    },
+    "model_identity": {
+      "revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "files": {
+        "config.json": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
+        "model.safetensors": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+        "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+        "tokenizer_config.json": "d5d09f07b48c3086c508b30d1c9114bd1189145b74e982a265350c923acd8101"
+      }
+    },
+    "runtime": {
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.20.2",
+      "hqq": "0.2.8.post1",
+      "device": "cuda:0",
+      "dtype": "torch.bfloat16",
+      "cuda_build": "12.8",
+      "device_name": "NVIDIA GeForce RTX 5080 Laptop GPU",
+      "device_capability": [
+        12,
+        0
+      ],
+      "total_device_bytes": 17094475776
+    },
+    "data_provenance_sha256": "6fd361acd97cee8b75600d67795b5b7a4271adfb8d5d8be1137703aef7501073",
+    "prepared_validation_sha256": {
+      "validation\\data-00000-of-00001.arrow": "76ea26cd79bee9fe8d8899c56f047b064b5a7c61b849bfb05a187a85ff1f621e",
+      "validation\\dataset_info.json": "f705c5bde9af03fc9c361b01692fc1a49b795df7e43ddd41adde419b589722cb",
+      "validation\\state.json": "dbd5b52f92745eede6a3334290f0b58027b1749056adb2da6e304b742252b7d0"
+    },
+    "gates": {
+      "whole_nll_increase": 0.02,
+      "whole_teacher_kl": 0.02,
+      "decode_nll_increase": 0.02,
+      "decode_teacher_kl": 0.02
+    },
+    "validation_block_range": [
+      0,
+      128
+    ],
+    "confirmatory_block_range": [
+      128,
+      384
+    ],
+    "created_at_utc": "2026-10-24T19:45:16.136251+00:00",
+    "confirmatory_evaluated": false
+  },
+  "opened_validation_receipts": [
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\hqq-b4-validation-20261024-a\\hqq4-blocks.jsonl",
+      "sha256": "12ce076a68dbc2201f1cc7a933e48ea2fae358be87804fabfb0ff55549fdcb1d",
+      "blocks": 128,
+      "max_block_id": 127
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\hqq-b4-validation-20261024-a\\hqq8-blocks.jsonl",
+      "sha256": "ce821831b82c49e68e3bc9b23da5752c15f557c131f0665929e12c475703c085",
+      "blocks": 128,
+      "max_block_id": 127
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\hqq-b4-validation-20261024-a\\identity-blocks.jsonl",
+      "sha256": "95770b59af77f1abd37e37a52e2dafbccbb0794cc543391990172451b44359b6",
+      "blocks": 128,
+      "max_block_id": 127
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-candidate-20261022-0701\\selected-validation-blocks.jsonl",
+      "sha256": "d276b89dd299e9f06f83178bd0719c1532c231211e8c5d21f27969faba4fcaf5",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-candidate-20261022-0701\\untrained-validation-blocks.jsonl",
+      "sha256": "b8d0d06742a08f6f15304828c7fd67022412bbf6bb1b06ecd84402ab360edb7b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-candidate-20261022-0701\\validation-step-128-blocks.jsonl",
+      "sha256": "f55255052920f4c61dd4e64af88da40194e2828fd1423956b7b2f2b7d83bf91d",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-candidate-20261022-0701\\validation-step-256-blocks.jsonl",
+      "sha256": "d276b89dd299e9f06f83178bd0719c1532c231211e8c5d21f27969faba4fcaf5",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-candidate-20261022-0701\\validation-step-32-blocks.jsonl",
+      "sha256": "10b494672bad95dee947dda63a1c72dccb610e36eb22fcb2726d0af2c203a138",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-cka-pairs2\\selected-validation-blocks.jsonl",
+      "sha256": "fd55fb517c8e92a7da5d359fca1cdd609ffb1eeeaa0fb6669e321f5d0cffb10d",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-cka-pairs2\\untrained-validation-blocks.jsonl",
+      "sha256": "3ea94fb132db48cb97cb9ab994dc28d48e135d82ea0b723d89da42477fca6440",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-cka-pairs2\\validation-step-128-blocks.jsonl",
+      "sha256": "42bcdcc0c00d87322318f2a9830945ce7792b41714a31700e2ce8642369970c8",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-cka-pairs2\\validation-step-256-blocks.jsonl",
+      "sha256": "fd55fb517c8e92a7da5d359fca1cdd609ffb1eeeaa0fb6669e321f5d0cffb10d",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-cka-pairs2\\validation-step-32-blocks.jsonl",
+      "sha256": "dbe627f4025a760c9368e91eb536e44f6fe1f4e50e4fc4ed622296744d253812",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-cka-pairs4\\selected-validation-blocks.jsonl",
+      "sha256": "3c6dba90b7450044d2620fbfcfa6a6ac0e652ddef882b07088d236db3f7bd6a4",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-cka-pairs4\\untrained-validation-blocks.jsonl",
+      "sha256": "a19d229e9c77466cedd26bdacaca237d817f173613069a686fa345e36ed89cff",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-cka-pairs4\\validation-step-128-blocks.jsonl",
+      "sha256": "c0dbc1af48d25927d86601c5093a283b55622f31f03aa88fc67a7f986e3b47c7",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-cka-pairs4\\validation-step-256-blocks.jsonl",
+      "sha256": "3c6dba90b7450044d2620fbfcfa6a6ac0e652ddef882b07088d236db3f7bd6a4",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-cka-pairs4\\validation-step-32-blocks.jsonl",
+      "sha256": "937c2eb1603c9a76a143baf20f3dbfa8d65129db74a4e87251b7f068fa2ed8bb",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs1\\selected-validation-blocks.jsonl",
+      "sha256": "a4a8fc3cdfe2f57145e9cb1543eb3654c9f29cb2d95d8d797e8ae2e949877ec9",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs1\\untrained-validation-blocks.jsonl",
+      "sha256": "69dd7feb9cf0f3f46b6ccaec9d7db9919e254ada146b64858f02348feeb2589b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs1\\validation-step-128-blocks.jsonl",
+      "sha256": "17e57dfc666d2da7528ed715328cd1aee2cc89133d64b47b7bb6e494638d1968",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs1\\validation-step-256-blocks.jsonl",
+      "sha256": "a4a8fc3cdfe2f57145e9cb1543eb3654c9f29cb2d95d8d797e8ae2e949877ec9",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs1\\validation-step-32-blocks.jsonl",
+      "sha256": "781d45503796db0f721f70b0635a99ad297539a184c4119ff6b25902bd57b703",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs2\\selected-validation-blocks.jsonl",
+      "sha256": "0204b19502c0b4dd91e079cd6fbabc84a712226e113738b8db6a6a8f14d1e7cd",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs2\\untrained-validation-blocks.jsonl",
+      "sha256": "277fadabf982fbd7468a697f3bea85b0dd5c2dddef200b1c14bb44d111d92f90",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs2\\validation-step-128-blocks.jsonl",
+      "sha256": "c33cc796674b7afd8bf356f25a07f8c997108c22632a9c50792627b67f046007",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs2\\validation-step-256-blocks.jsonl",
+      "sha256": "0204b19502c0b4dd91e079cd6fbabc84a712226e113738b8db6a6a8f14d1e7cd",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs2\\validation-step-32-blocks.jsonl",
+      "sha256": "3e27ff65c928e8e303116b27f3d1f1068f7ae94d3232ede70c60ea5cbb206cc6",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs4\\selected-validation-blocks.jsonl",
+      "sha256": "177b8ad98b4d46bceb96834408fbe5b952c409024dd772e0d632d981f6ddd3ad",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs4\\untrained-validation-blocks.jsonl",
+      "sha256": "6f599c58094c2642e9d1274ed2179eb811dc4fddc98fb1058dd926ec1bd9a2a5",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs4\\validation-step-128-blocks.jsonl",
+      "sha256": "d19a5986ad5e7be01619f8973d0626e41d5c9cee04f45bea678e24161f0ef217",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs4\\validation-step-256-blocks.jsonl",
+      "sha256": "177b8ad98b4d46bceb96834408fbe5b952c409024dd772e0d632d981f6ddd3ad",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed11-uniform-pairs4\\validation-step-32-blocks.jsonl",
+      "sha256": "8b362e3a5af454ba5a527cbfa509faa2fd13fb9ddc9fc691d7f1a56eb05f6462",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs1\\selected-validation-blocks.jsonl",
+      "sha256": "ddb12f170eff028be1570fbdc5dfc08d2c20e0f42a041b957fd1ebb8d5d56955",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs1\\untrained-validation-blocks.jsonl",
+      "sha256": "b8d0d06742a08f6f15304828c7fd67022412bbf6bb1b06ecd84402ab360edb7b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs1\\validation-step-128-blocks.jsonl",
+      "sha256": "73d31d24b695665e2d900b6bc60816fa062d6ccd8bafe6487a87eb12930910f2",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs1\\validation-step-256-blocks.jsonl",
+      "sha256": "ddb12f170eff028be1570fbdc5dfc08d2c20e0f42a041b957fd1ebb8d5d56955",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs1\\validation-step-32-blocks.jsonl",
+      "sha256": "b9239ed148e32f5798b2e36a0ece0f5ab79a576c44d286f8c65b9d6b82142ab6",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs2\\selected-validation-blocks.jsonl",
+      "sha256": "c9ad60e20fdc63a01f94e61ec4749017c5719f9ff82a3f8c3de072fe480db247",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs2\\untrained-validation-blocks.jsonl",
+      "sha256": "3ea94fb132db48cb97cb9ab994dc28d48e135d82ea0b723d89da42477fca6440",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs2\\validation-step-128-blocks.jsonl",
+      "sha256": "faeea2521760c8dff81e87ab1dfef22005f831ba46b1e756b4ec00bdc690b226",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs2\\validation-step-256-blocks.jsonl",
+      "sha256": "c9ad60e20fdc63a01f94e61ec4749017c5719f9ff82a3f8c3de072fe480db247",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs2\\validation-step-32-blocks.jsonl",
+      "sha256": "293a018b65d6dc655355ef2bf05b2ed7d85bfac0a70b1d4917b32f239575d6d1",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs4\\selected-validation-blocks.jsonl",
+      "sha256": "8680a33e277faea93f0804649d851f74aeb7f0d439fc9dd33d1d1b53034eee6a",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs4\\untrained-validation-blocks.jsonl",
+      "sha256": "a19d229e9c77466cedd26bdacaca237d817f173613069a686fa345e36ed89cff",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs4\\validation-step-128-blocks.jsonl",
+      "sha256": "3363cf2f27a8855ef4f9d49869fb14ae833ee94ec4a3af42dd83b075b7892a1b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs4\\validation-step-256-blocks.jsonl",
+      "sha256": "8680a33e277faea93f0804649d851f74aeb7f0d439fc9dd33d1d1b53034eee6a",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-cka-pairs4\\validation-step-32-blocks.jsonl",
+      "sha256": "3d88f5715c75c8919e829434794444341e9fbfb0c2ed0276c77ec8f7fbcdf26a",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs1\\selected-validation-blocks.jsonl",
+      "sha256": "acbac300b621f68a453aed1a24f22ceb7bf664a57b0ae3d22ca68b7893c7cdd5",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs1\\untrained-validation-blocks.jsonl",
+      "sha256": "69dd7feb9cf0f3f46b6ccaec9d7db9919e254ada146b64858f02348feeb2589b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs1\\validation-step-128-blocks.jsonl",
+      "sha256": "2227d09f4ffb754b2685bd99e4f37a00b40611c84885abac32fcaefc72f3dea8",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs1\\validation-step-256-blocks.jsonl",
+      "sha256": "acbac300b621f68a453aed1a24f22ceb7bf664a57b0ae3d22ca68b7893c7cdd5",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs1\\validation-step-32-blocks.jsonl",
+      "sha256": "f1b055d7cb3a85094750a6b5c06d51967394e04751d6fbc33e4ee4cb0ead5d31",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs2\\selected-validation-blocks.jsonl",
+      "sha256": "0384abfdd674190995ad17bef6b2b62997fcff67d94720687970a4481f37e9e1",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs2\\untrained-validation-blocks.jsonl",
+      "sha256": "277fadabf982fbd7468a697f3bea85b0dd5c2dddef200b1c14bb44d111d92f90",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs2\\validation-step-128-blocks.jsonl",
+      "sha256": "f14daeae982d691d96bb4127c541d65a0928da880f79a20e6b8ea9721f223e00",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs2\\validation-step-256-blocks.jsonl",
+      "sha256": "0384abfdd674190995ad17bef6b2b62997fcff67d94720687970a4481f37e9e1",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs2\\validation-step-32-blocks.jsonl",
+      "sha256": "25e89a869a6bca3568fb541b43d1dc3b67db314d3c5a043cffa7312bb97db701",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs4\\selected-validation-blocks.jsonl",
+      "sha256": "1faa8d3743ca9fccb056025e656ff03832392e60b6d656350f1b47aefd670282",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs4\\untrained-validation-blocks.jsonl",
+      "sha256": "6f599c58094c2642e9d1274ed2179eb811dc4fddc98fb1058dd926ec1bd9a2a5",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs4\\validation-step-128-blocks.jsonl",
+      "sha256": "7f85394186a0dc565e96edf437572f4dd5e6c7e5f13566cee040475a472f3bef",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs4\\validation-step-256-blocks.jsonl",
+      "sha256": "1faa8d3743ca9fccb056025e656ff03832392e60b6d656350f1b47aefd670282",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed23-uniform-pairs4\\validation-step-32-blocks.jsonl",
+      "sha256": "7639d129de38230aedfb5dc4b859ae91b3a69da519ce83d46f407954551f1af4",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs1\\selected-validation-blocks.jsonl",
+      "sha256": "76a4fac2468ed41a874bf3011befee6283af642842ff7346777f15a85e5bfe73",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs1\\untrained-validation-blocks.jsonl",
+      "sha256": "b8d0d06742a08f6f15304828c7fd67022412bbf6bb1b06ecd84402ab360edb7b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs1\\validation-step-128-blocks.jsonl",
+      "sha256": "e1efe88be270db2062c55347045e4c416f67dd3c021667eaf3e79331de77c63b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs1\\validation-step-256-blocks.jsonl",
+      "sha256": "76a4fac2468ed41a874bf3011befee6283af642842ff7346777f15a85e5bfe73",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs1\\validation-step-32-blocks.jsonl",
+      "sha256": "51928ccd3fb366c53b4e4372b935141eb37df7dc159f0d159060a4555e403d17",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs2\\selected-validation-blocks.jsonl",
+      "sha256": "61c28fee2d6f8b6e43bea6f40735e7ce5d3dca83d450cc6b69f99648e9396f5c",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs2\\untrained-validation-blocks.jsonl",
+      "sha256": "3ea94fb132db48cb97cb9ab994dc28d48e135d82ea0b723d89da42477fca6440",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs2\\validation-step-128-blocks.jsonl",
+      "sha256": "c8bf4102fdefac5cbb4d30b28db488323eb713f716b16b20314579f495e636ff",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs2\\validation-step-256-blocks.jsonl",
+      "sha256": "61c28fee2d6f8b6e43bea6f40735e7ce5d3dca83d450cc6b69f99648e9396f5c",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs2\\validation-step-32-blocks.jsonl",
+      "sha256": "7ca96bc0d9d4dc391deb1bef5a655d8017eeaadda285c4ea64bca3110514150e",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs4\\selected-validation-blocks.jsonl",
+      "sha256": "116f7b8a56acce680287ee388fb2fbad3908801e2f6f0eed92bac292d65e8478",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs4\\untrained-validation-blocks.jsonl",
+      "sha256": "a19d229e9c77466cedd26bdacaca237d817f173613069a686fa345e36ed89cff",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs4\\validation-step-128-blocks.jsonl",
+      "sha256": "5512cf14bfd5e0cb71aabe25c0bee7162855ca63e600874907bc7782bcff2590",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs4\\validation-step-256-blocks.jsonl",
+      "sha256": "116f7b8a56acce680287ee388fb2fbad3908801e2f6f0eed92bac292d65e8478",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-cka-pairs4\\validation-step-32-blocks.jsonl",
+      "sha256": "95b5f40840041db9d48b39016b3913c009053097f07348df69e4eea5e48ef056",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs1\\selected-validation-blocks.jsonl",
+      "sha256": "2e6e36aeae9c924890616d6f663e953f2980cf01c09f74662a393e6accba9103",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs1\\untrained-validation-blocks.jsonl",
+      "sha256": "69dd7feb9cf0f3f46b6ccaec9d7db9919e254ada146b64858f02348feeb2589b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs1\\validation-step-128-blocks.jsonl",
+      "sha256": "4d7a4ade20ef289c1cfde0a39981a541b236a3677f5358e79152e1297fb202df",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs1\\validation-step-256-blocks.jsonl",
+      "sha256": "2e6e36aeae9c924890616d6f663e953f2980cf01c09f74662a393e6accba9103",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs1\\validation-step-32-blocks.jsonl",
+      "sha256": "59abb10b9a163c83d53e94aeb40dc8ab042d70908104b4c990a3648d82bf54a2",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs2\\selected-validation-blocks.jsonl",
+      "sha256": "86c836736274f54c13605399d923cfec180407297869901487ef9da1b95a7f23",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs2\\untrained-validation-blocks.jsonl",
+      "sha256": "277fadabf982fbd7468a697f3bea85b0dd5c2dddef200b1c14bb44d111d92f90",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs2\\validation-step-128-blocks.jsonl",
+      "sha256": "3e0a7d31945c3a9e206ec32b7f90b6f3ef4f551f1eab11e85c6285d84a62039c",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs2\\validation-step-256-blocks.jsonl",
+      "sha256": "86c836736274f54c13605399d923cfec180407297869901487ef9da1b95a7f23",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs2\\validation-step-32-blocks.jsonl",
+      "sha256": "0046f062df0a8cb7fcb7993bc7227f6163d5907c059c060b9576be4a9064648c",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs4\\selected-validation-blocks.jsonl",
+      "sha256": "7bf9f3edad72b93475b00a3f1581a80386d7928dcfe46f29bcddde8dc98faa8e",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs4\\untrained-validation-blocks.jsonl",
+      "sha256": "6f599c58094c2642e9d1274ed2179eb811dc4fddc98fb1058dd926ec1bd9a2a5",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs4\\validation-step-128-blocks.jsonl",
+      "sha256": "aa777775cce6b436271bd872be6a482a01b49829f09a622f16644cf3fabda0a8",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs4\\validation-step-256-blocks.jsonl",
+      "sha256": "7bf9f3edad72b93475b00a3f1581a80386d7928dcfe46f29bcddde8dc98faa8e",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed37-uniform-pairs4\\validation-step-32-blocks.jsonl",
+      "sha256": "bc8052a03cf0e1ababea60562eddfce1f0ba6d9b56ae68ea99aec18366cf5743",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs1\\selected-validation-blocks.jsonl",
+      "sha256": "4b1071a04c8a3db95be16fc152a4ac1a674cbe9b3a3579b6bde2528b6ee738aa",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs1\\untrained-validation-blocks.jsonl",
+      "sha256": "b8d0d06742a08f6f15304828c7fd67022412bbf6bb1b06ecd84402ab360edb7b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs1\\validation-step-128-blocks.jsonl",
+      "sha256": "bd8aac5911db20d53d98ec7eef8c23a722437e3a3b8a6aa5383797b12e4aaaff",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs1\\validation-step-256-blocks.jsonl",
+      "sha256": "4b1071a04c8a3db95be16fc152a4ac1a674cbe9b3a3579b6bde2528b6ee738aa",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs1\\validation-step-32-blocks.jsonl",
+      "sha256": "51786a8bc31e6e745bec35802683864cff5ceaf45a594ce28ddeecaa4cc8bdf3",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs2\\selected-validation-blocks.jsonl",
+      "sha256": "dec79a8d8cadebf7b82f9622554c2bf1de6dea17f432cb2fddaff7e78bbf5fb0",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs2\\untrained-validation-blocks.jsonl",
+      "sha256": "3ea94fb132db48cb97cb9ab994dc28d48e135d82ea0b723d89da42477fca6440",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs2\\validation-step-128-blocks.jsonl",
+      "sha256": "223a10fa05d05b4ecdf54ae3342b8a687c026d83004c22dafd5d7e2af67b4454",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs2\\validation-step-256-blocks.jsonl",
+      "sha256": "dec79a8d8cadebf7b82f9622554c2bf1de6dea17f432cb2fddaff7e78bbf5fb0",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs2\\validation-step-32-blocks.jsonl",
+      "sha256": "77705d1bf4305ea3851181863299b372d7478d094d3dc81d283042e36bab5142",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs4\\selected-validation-blocks.jsonl",
+      "sha256": "904dc648cff2bf7ff982aeb1edb9a1391b1d1dbf67b6e7790b37d7cdd2120125",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs4\\untrained-validation-blocks.jsonl",
+      "sha256": "a19d229e9c77466cedd26bdacaca237d817f173613069a686fa345e36ed89cff",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs4\\validation-step-128-blocks.jsonl",
+      "sha256": "fd9fab8d5909129f8eef1510adb2ab8d6ec75063fa609ed5399cb8a013a7679a",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs4\\validation-step-256-blocks.jsonl",
+      "sha256": "904dc648cff2bf7ff982aeb1edb9a1391b1d1dbf67b6e7790b37d7cdd2120125",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-cka-pairs4\\validation-step-32-blocks.jsonl",
+      "sha256": "50f4a548b9f247c36593e6221adb9e9e622c5e6158e419c4d140a3e4994d99ce",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs1\\selected-validation-blocks.jsonl",
+      "sha256": "e9591f8113335741595acf2ce3c81803d71f1d49554aae25c6b6772ffe2e2c6b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs1\\untrained-validation-blocks.jsonl",
+      "sha256": "69dd7feb9cf0f3f46b6ccaec9d7db9919e254ada146b64858f02348feeb2589b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs1\\validation-step-128-blocks.jsonl",
+      "sha256": "8cf9cfabb69177d492ca2f00073e1a5a39adb8cc2a3355bb9106d39c05b85ab3",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs1\\validation-step-256-blocks.jsonl",
+      "sha256": "e9591f8113335741595acf2ce3c81803d71f1d49554aae25c6b6772ffe2e2c6b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs1\\validation-step-32-blocks.jsonl",
+      "sha256": "4e80c0e490cc16cabc0f26741ba053b826106f9ded251a1d0bd3bf7b0e20aecd",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs2\\selected-validation-blocks.jsonl",
+      "sha256": "e24566b4fda479253ea002985c8b1f924a55061e6b49e95af0c2772d66346c96",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs2\\untrained-validation-blocks.jsonl",
+      "sha256": "277fadabf982fbd7468a697f3bea85b0dd5c2dddef200b1c14bb44d111d92f90",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs2\\validation-step-128-blocks.jsonl",
+      "sha256": "40c1c1773bcd106f288c2716846726f049e84fcf06ae60e24615cb3654cd9265",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs2\\validation-step-256-blocks.jsonl",
+      "sha256": "e24566b4fda479253ea002985c8b1f924a55061e6b49e95af0c2772d66346c96",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs2\\validation-step-32-blocks.jsonl",
+      "sha256": "a35e4a03ee0bc15a5536260029fff7bdc299c6aa35f9ccb2bc046a89daedbed1",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs4\\selected-validation-blocks.jsonl",
+      "sha256": "1aa02d4d2db933ff13bf13a6356d8638c75589cd8a39604657f2712c7aac05bd",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs4\\untrained-validation-blocks.jsonl",
+      "sha256": "6f599c58094c2642e9d1274ed2179eb811dc4fddc98fb1058dd926ec1bd9a2a5",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs4\\validation-step-128-blocks.jsonl",
+      "sha256": "153f217e34766d2e961d8038bd8655f0ff4784ceff1edcd51bae65ecd50a473b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs4\\validation-step-256-blocks.jsonl",
+      "sha256": "1aa02d4d2db933ff13bf13a6356d8638c75589cd8a39604657f2712c7aac05bd",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed51-uniform-pairs4\\validation-step-32-blocks.jsonl",
+      "sha256": "54b82f1bcbace1eeb8e469392828959859f5e130665955f780b771af2ffc88e0",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs1\\selected-validation-blocks.jsonl",
+      "sha256": "e8fa926b825a9ff4e802ba93a9f294c327aac528a86e9809cdf266bc475d9a05",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs1\\untrained-validation-blocks.jsonl",
+      "sha256": "b8d0d06742a08f6f15304828c7fd67022412bbf6bb1b06ecd84402ab360edb7b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs1\\validation-step-128-blocks.jsonl",
+      "sha256": "08ec2f1157d51cca4191136944434c7fc7e1a2f76c7066437c5a2dcc4b769d04",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs1\\validation-step-256-blocks.jsonl",
+      "sha256": "e8fa926b825a9ff4e802ba93a9f294c327aac528a86e9809cdf266bc475d9a05",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs1\\validation-step-32-blocks.jsonl",
+      "sha256": "64a34f941da77ca2eec0471358c30371ffa8cd84bae09d6831cb1836b1a47414",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs2\\selected-validation-blocks.jsonl",
+      "sha256": "3d5b13b929655fd9cb7b3317c6fe6b52d3c98cbaf2e80d7b48dc2dc6f7c8050b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs2\\untrained-validation-blocks.jsonl",
+      "sha256": "3ea94fb132db48cb97cb9ab994dc28d48e135d82ea0b723d89da42477fca6440",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs2\\validation-step-128-blocks.jsonl",
+      "sha256": "d3cfd2ae32bb0ec7d6f25ffda1aa972df035342b82cbf0a451153de46e71e859",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs2\\validation-step-256-blocks.jsonl",
+      "sha256": "3d5b13b929655fd9cb7b3317c6fe6b52d3c98cbaf2e80d7b48dc2dc6f7c8050b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs2\\validation-step-32-blocks.jsonl",
+      "sha256": "19c51b7c9ec993380df19181c06df9f9b1e2de14e1466010cf9eee47e75bb953",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs4\\selected-validation-blocks.jsonl",
+      "sha256": "4d879ef5aedfb0bddbe5cbebf498a10baec09457ac5c9de69784b142cb706119",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs4\\untrained-validation-blocks.jsonl",
+      "sha256": "a19d229e9c77466cedd26bdacaca237d817f173613069a686fa345e36ed89cff",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs4\\validation-step-128-blocks.jsonl",
+      "sha256": "377d36f765b590b11f93f6517b84189b503a3e56b23116d2f7c74ff2a47c651b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs4\\validation-step-256-blocks.jsonl",
+      "sha256": "4d879ef5aedfb0bddbe5cbebf498a10baec09457ac5c9de69784b142cb706119",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-cka-pairs4\\validation-step-32-blocks.jsonl",
+      "sha256": "afda600fbd4714c1660266c6ff907cc4651f026d3eda12a0498727ddd5413341",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs1\\selected-validation-blocks.jsonl",
+      "sha256": "7d834cd1413ed4dcfde6562ea94e44384463a8e9bb233366f6ddf5d42a9a4d1a",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs1\\untrained-validation-blocks.jsonl",
+      "sha256": "69dd7feb9cf0f3f46b6ccaec9d7db9919e254ada146b64858f02348feeb2589b",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs1\\validation-step-128-blocks.jsonl",
+      "sha256": "fcbb8cee64817b4eb2c96b939a416761e2261548bbbe601a33c010083ea3dae9",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs1\\validation-step-256-blocks.jsonl",
+      "sha256": "7d834cd1413ed4dcfde6562ea94e44384463a8e9bb233366f6ddf5d42a9a4d1a",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs1\\validation-step-32-blocks.jsonl",
+      "sha256": "9d40d0e0e03c86465fd3d94df03144692b5f19ff5ca665146af83c368e5756b8",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs2\\selected-validation-blocks.jsonl",
+      "sha256": "6b17e40d87f7bae5586e1e7c4f9cb64ce51127612226cfd52e85384f010f1e0c",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs2\\untrained-validation-blocks.jsonl",
+      "sha256": "277fadabf982fbd7468a697f3bea85b0dd5c2dddef200b1c14bb44d111d92f90",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs2\\validation-step-128-blocks.jsonl",
+      "sha256": "d1e4351d162f4413501d89e2769a54fa4a49a79cdfa3062e8703ae093120d7c4",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs2\\validation-step-256-blocks.jsonl",
+      "sha256": "6b17e40d87f7bae5586e1e7c4f9cb64ce51127612226cfd52e85384f010f1e0c",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs2\\validation-step-32-blocks.jsonl",
+      "sha256": "27a4a7f3672c497dabba6c960629883d7e8c1f5027e510c1de9c2f4217db5286",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs4\\selected-validation-blocks.jsonl",
+      "sha256": "c6a146033b7f56ad7d6ffd22a89cda16082915ea0b7e867c1cbd27350263cadb",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs4\\untrained-validation-blocks.jsonl",
+      "sha256": "6f599c58094c2642e9d1274ed2179eb811dc4fddc98fb1058dd926ec1bd9a2a5",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs4\\validation-step-128-blocks.jsonl",
+      "sha256": "464152ae274a31fbe0d1c4a600369a71621d4cef2fc501ae764a4cd897908aee",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs4\\validation-step-256-blocks.jsonl",
+      "sha256": "c6a146033b7f56ad7d6ffd22a89cda16082915ea0b7e867c1cbd27350263cadb",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-grid-20261022-0813\\seed71-uniform-pairs4\\validation-step-32-blocks.jsonl",
+      "sha256": "098189fa0f9d9c3c01f01d92b62c56036af443bd06b6301e80588d9801011130",
+      "blocks": 128,
+      "max_block_id": 127.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-pilot-20261022-0646\\selected-validation-blocks.jsonl",
+      "sha256": "cd9309c980d7c905073e3377da08a4f0e5366bc15afa8eb2ff5e145f6f123282",
+      "blocks": 8,
+      "max_block_id": 7.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-pilot-20261022-0646\\untrained-validation-blocks.jsonl",
+      "sha256": "46817e562c3f38ddd7fc807ddaefcd7cb2aaff320159b9b42d6e88ad72b71f93",
+      "blocks": 8,
+      "max_block_id": 7.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-pilot-20261022-0646\\validation-step-4-blocks.jsonl",
+      "sha256": "cd9309c980d7c905073e3377da08a4f0e5366bc15afa8eb2ff5e145f6f123282",
+      "blocks": 8,
+      "max_block_id": 7.0
+    },
+    {
+      "path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-pilot-20261022-0646\\validation-step-8-blocks.jsonl",
+      "sha256": "ceb877e2475d99f04af203c7f29bc3ebb5c1e01c33dac10c5604a48ce2a2cab0",
+      "blocks": 8,
+      "max_block_id": 7.0
+    }
+  ],
+  "model_identity": {
+    "revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "files": {
+      "config.json": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
+      "model.safetensors": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+      "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "tokenizer_config.json": "d5d09f07b48c3086c508b30d1c9114bd1189145b74e982a265350c923acd8101"
+    }
+  },
+  "data_provenance_sha256": "6fd361acd97cee8b75600d67795b5b7a4271adfb8d5d8be1137703aef7501073",
+  "prepared_validation_sha256": {
+    "validation\\data-00000-of-00001.arrow": "76ea26cd79bee9fe8d8899c56f047b064b5a7c61b849bfb05a187a85ff1f621e",
+    "validation\\dataset_info.json": "f705c5bde9af03fc9c361b01692fc1a49b795df7e43ddd41adde419b589722cb",
+    "validation\\state.json": "dbd5b52f92745eede6a3334290f0b58027b1749056adb2da6e304b742252b7d0"
+  },
+  "data_path": "C:\\Users\\steve\\Projects\\kv-cache-sharing\\evidence\\wikitext-data-20261022-0644",
+  "model_path": "C:\\Users\\steve\\.cache\\huggingface\\hub\\models--Qwen--Qwen3-0.6B\\snapshots\\c1899de289a04d12100db370d81485cdf75e47ca",
+  "device": "cuda:0",
+  "dtype": "torch.bfloat16",
+  "runtime": {
+    "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.20.2",
+    "hqq": "0.2.8.post1",
+    "device": "cuda:0",
+    "dtype": "torch.bfloat16",
+    "cuda_build": "12.8",
+    "device_name": "NVIDIA GeForce RTX 5080 Laptop GPU",
+    "device_capability": [
+      12,
+      0
+    ],
+    "total_device_bytes": 17094475776
+  },
+  "coverage_blocks": 256,
+  "coverage_batches": 64,
+  "selected": "hqq8",
+  "blocks": 256,
+  "blocks_file": "confirmatory-blocks.jsonl",
+  "blocks_sha256": "90f0dc705a1138ea812df2a57d48b1a66abbbd10b14151a54c2a9f3c2f6613d6",
+  "metrics_file": "confirmatory-metrics.json",
+  "metrics_sha256": "842de3cefe8530aa929d60642eea95779848dec1fa6d36bfb542a5a450731131",
+  "metrics": {
+    "mean_teacher_nll": 3.9607963871212752,
+    "mean_candidate_nll": 3.961475453071473,
+    "mean_teacher_kl": 0.0018341009085463484,
+    "mean_token_agreement": 0.9840087890625,
+    "mean_decode_teacher_nll": 3.5448152330167724,
+    "mean_decode_candidate_nll": 3.546184143741774,
+    "mean_decode_teacher_kl": 0.0036682018170926967,
+    "mean_decode_token_agreement": 0.968017578125,
+    "whole_nll_increase": 0.0006790659501975747,
+    "decode_nll_increase": 0.0013689107250014192,
+    "whole_nll_delta_stdev": 0.007592132938701644,
+    "decode_nll_delta_stdev": 0.015304775924049331,
+    "whole_nll_delta_min": -0.038379754577800185,
+    "whole_nll_delta_max": 0.03650921594536438,
+    "decode_nll_delta_min": -0.07736871160921588,
+    "decode_nll_delta_max": 0.07359794325494162,
+    "blocks": 256,
+    "persistent_bytes": {
+      "64": 15597568.0,
+      "95": 29818880.0,
+      "96": 23396352.0,
+      "97": 23855104.0,
+      "127": 37617664.0,
+      "128": 31195136.0
+    },
+    "persistent_bytes_per_sequence_derived": {
+      "64": 3899392.0,
+      "95": 7454720.0,
+      "96": 5849088.0,
+      "97": 5963776.0,
+      "127": 9404416.0,
+      "128": 7798784.0
+    },
+    "teacher_persistent_bytes": {
+      "64": 29360128.0,
+      "95": 43581440.0,
+      "96": 44040192.0,
+      "97": 44498944.0,
+      "127": 58261504.0,
+      "128": 58720256.0
+    },
+    "teacher_persistent_bytes_per_sequence_derived": {
+      "64": 7340032.0,
+      "95": 10895360.0,
+      "96": 11010048.0,
+      "97": 11124736.0,
+      "127": 14565376.0,
+      "128": 14680064.0
+    },
+    "batch_size": 4,
+    "batches": 64,
+    "persistent_bytes_scope": "actual total unique tensor storage for the whole batch",
+    "whole_gate_passed": true,
+    "decode_gate_passed": true,
+    "passed": true
+  },
+  "finished_at_utc": "2026-10-24T19:51:40.913875+00:00",
+  "elapsed_seconds": 338.8590000000113,
+  "resources": {
+    "requested_device": "cuda",
+    "cuda_available": true,
+    "process_peak_rss_bytes": null,
+    "process_peak_rss_status": "not measured",
+    "actual_cuda_device": "NVIDIA GeForce RTX 5080 Laptop GPU",
+    "current_allocated_bytes": 1225673728,
+    "current_reserved_bytes": 1388314624,
+    "peak_allocated_bytes": 1443333120,
+    "peak_reserved_bytes": 1543503872,
+    "total_device_bytes": 17094475776
+  }
+}
