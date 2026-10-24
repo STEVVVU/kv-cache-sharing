@@ -2,6 +2,123 @@
 
 An executable implementation of adjacent inter-layer KV sharing and consumer-only self-distillation for pretrained Qwen3. It runs actual PyTorch attention and aliases actual Transformers cache storage. It is not an array simulator.
 
+## Contents
+
+- [Native HQQ cache study](#native-hqq-cache-study)
+- [Run](#run)
+- [Architecture and execution guide](#architecture-and-execution-guide)
+- [Course and mechanism map](#course-and-mechanism-map)
+- [Observed local result](#observed-local-result)
+- [Verification and limits](#verification-and-limits)
+- [License and provenance](#license-and-provenance)
+
+## Architecture and execution guide
+
+This project has two real-model paths. `Sharing` patches adjacent attention consumers and aliases actual Transformers cache objects; calibration selects a map and optional distillation trains consumer parameters. The separate HQQ study uses Transformers' native quantized cache. A [producer layer](#producer-layer) supplies K/V; a [consumer layer](#consumer-layer) reuses it.
+
+The top-level flow separates patched sharing from native HQQ measurements.
+
+```mermaid
+flowchart LR
+  N1["Qwen3 inputs"] --> N3["Sharing patch"]
+  N1["Qwen3 inputs"] --> N5["Native HQQ cache"]
+  N3["Sharing patch"] --> N4["Attention with aliased DynamicCache"]
+  N5["Native HQQ cache"] --> N6["Transformers quantized cache"]
+  N4["Attention with aliased DynamicCache"] --> N7["Logits and cache metrics"]
+  N6["Transformers quantized cache"] --> N7["Logits and cache metrics"]
+  N7["Logits and cache metrics"] --> N8["Experiment receipts"]
+```
+
+Calibration recomputes student activations after each selected pair. The sharing flow rejects invalid maps and `close` restores the original attention methods.
+
+```mermaid
+flowchart TD
+  subgraph calibration["Calibration"]
+    N1["Unshared activations"] --> N2["Adjacent K and V CKA"]
+    N2["Adjacent K and V CKA"] --> N3["Greedy map choice"]
+    N3["Greedy map choice"] --> N4["Recompute shared student"]
+  end
+  subgraph sharing["Model forward"]
+    N5["Validate map"] --> N6["Patch consumer"]
+    N6["Patch consumer"] --> N7["Producer writes K and V"]
+    N7["Producer writes K and V"] --> N8["Consumer reads shared tensors"]
+    N8["Consumer reads shared tensors"] --> N9["Logits and cache identity"]
+    N9["Logits and cache identity"] --> N10["Optional distillation"]
+  end
+  N4["Recompute shared student"] --> N2["Adjacent K and V CKA"]
+  N11["Invalid map"] --> N12["Raise ValueError"]
+  N13["close"] --> N14["Restore original forward"]
+```
+
+| Subsystem | Responsibility and owned state | Source |
+| --- | --- | --- |
+| Map validation and patch | Checks map shape and saves/restores patched attention methods. | [`kvshare.py`](kvshare.py) |
+| Calibration | Computes post-RoPE adjacent K/V activations, scores them, and greedily selects a map. | [`kvshare.py`](kvshare.py) |
+| Cache sharing | Skips consumer K/V projections and aliases producer entries in `DynamicCache`. | [`kvshare.py`](kvshare.py), [`test_sharing.py`](tests/test_sharing.py) |
+| Distillation and metrics | Selects trainable consumer parameters and reports loss, KL, cache bytes, and Pareto status. | [`kvshare.py`](kvshare.py) |
+| HQQ receipts | Measures native quantized cache behavior on fixed blocks. | [`quantized_metrics.py`](tools/quantized_metrics.py), [`check_hqq_receipts.py`](tools/check_hqq_receipts.py) |
+| Verification | Drives bounded model checks without implicit weight downloads. | [`verify.py`](tools/verify.py), [`test_sharing.py`](tests/test_sharing.py) |
+
+Execution journey:
+
+1. Load local Qwen3 weights and prepare input IDs and masks.
+2. `calibrate` scores adjacent [linear CKA](#linear-cka) for keys and values, then recomputes the shared student before choosing the next pair.
+3. Validate the map. Chains, fan-out, and invalid windows raise `ValueError`.
+4. `Sharing` patches consumer attention. The producer writes K/V and the consumer reads those same cache tensors without its own projections.
+5. Run inference or consumer-only distillation. Tests verify object identity and prefill/decode parity. Call `close` to restore attention.
+6. HQQ uses a separate native cache path and records fixed-input quality and storage; it does not use the sharing patch.
+
+| Choice | Current behavior and rationale inferred from code | Alternative and cost to reconsider |
+| --- | --- | --- |
+| Restrict maps to adjacent layers | Avoids chains and fan-out and reuses the preceding layer's tensors. | Arbitrary graphs need compatibility and cache ownership rules. |
+| Use minimum K/V CKA | Both key and value activations must score well. | Learned scoring is task-specific and needs training and validation. |
+| Recompute after each greedy choice | Later scores reflect the changed student forward. | One-shot ranking is cheaper but evaluates under a stale path. |
+| Alias actual cache objects | Avoids tensor copies and measures real cache storage reduction. | Copies keep layers independent but remove the sharing benefit. |
+| Train selected consumer parameters | Leaves teacher and producer weights fixed. | Full tuning adds compute and changes unrelated model parameters. |
+| Measure HQQ separately | Keeps quantization effects distinct from layer sharing. | Combining mechanisms confounds their individual quality and storage effects. |
+
+These are current tradeoffs, not recorded historical intent. Fixed-input results do not establish generated-text quality, throughput, or total GPU memory savings.
+
+<a id="producer-layer"></a>
+
+<details><summary>What is a producer layer?</summary>
+
+A producer layer computes the K/V tensors a consumer reuses. The test map `{1: 0}` makes layer 0 the producer for layer 1.
+
+</details>
+
+<a id="consumer-layer"></a>
+
+<details><summary>What is a consumer layer?</summary>
+
+A consumer layer reads the preceding producer's K/V tensors instead of projecting its own. The patch leaves its other attention work in place.
+
+</details>
+
+<a id="linear-cka"></a>
+
+<details><summary>What is linear CKA?</summary>
+
+Linear centered kernel alignment compares feature relationships after centering activations. Calibration scores post-RoPE keys and values separately and takes the lower score.
+
+</details>
+
+<a id="dynamic-cache"></a>
+
+<details><summary>What is DynamicCache?</summary>
+
+`DynamicCache` is Transformers' per-layer growing KV cache. Tests confirm producer and consumer entries can be the same object through prefill and decode.
+
+</details>
+
+<a id="teacher-forced-metric"></a>
+
+<details><summary>What is a teacher-forced metric?</summary>
+
+A teacher-forced metric scores fixed tokens instead of sampled text. The HQQ report uses held validation blocks, so it does not establish generated-text quality.
+
+</details>
+
 ## Native HQQ cache study
 
 On 256 held WikiText-2 validation blocks, the selected native Transformers HQQ 8-bit cache had mean whole-block NLL increase `0.0006791` and teacher KL `0.0018341`. The corresponding decode means were `0.0013689` NLL increase and `0.0036682` KL, below the study's `0.02` mean gates. At batch size four and sequence length 128, measured persistent cache storage was 31,195,136 bytes versus 58,720,256 bytes for the identity cache, a 46.875% reduction. These are fixed-input teacher-forced means; some individual blocks exceeded the NLL threshold. This does not establish equivalence, generated-text quality, throughput, total GPU memory savings, training improvement, or a new quantizer. See the [full HQQ report and receipts](docs/results/hqq-cache-2026-10-24.md).
