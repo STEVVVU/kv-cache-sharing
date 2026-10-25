@@ -4,6 +4,7 @@ An executable implementation of adjacent inter-layer KV sharing and consumer-onl
 
 ## Contents
 
+- [Implementation techniques](#implementation-techniques)
 - [Native HQQ cache study](#native-hqq-cache-study)
 - [Run](#run)
 - [Architecture and execution guide](#architecture-and-execution-guide)
@@ -116,6 +117,258 @@ Linear centered kernel alignment compares feature relationships after centering 
 <details><summary>What is a teacher-forced metric?</summary>
 
 A teacher-forced metric scores fixed tokens instead of sampled text. The HQQ report uses held validation blocks, so it does not establish generated-text quality.
+
+</details>
+
+## Implementation techniques
+
+This section explains mechanisms on the active sharing and native HQQ study paths. Rationale is inferred from current code; the study uses fixed-token teacher-forced measurements and does not promise generated-text quality or total GPU memory savings.
+
+| Subsystem | Technique cards | Code |
+| --- | --- | --- |
+| Activation similarity and map selection | [Gram-form linear CKA](#technique-linear-cka); [Greedy recalibration with capacity checks](#technique-greedy-recalibration) | [`kvshare.py`](kvshare.py#L19), [`kvshare.py`](kvshare.py#L128) |
+| Map validation and patch lifecycle | [Adjacent-map validation](#technique-map-validation); [Reversible attention patching](#technique-patch-lifecycle) | [`kvshare.py`](kvshare.py#L28), [`kvshare.py`](kvshare.py#L35) |
+| Cache routing and attention behavior | [Shared cache storage aliasing](#technique-cache-aliasing); [Consumer window-mask ablation](#technique-window-mask) | [`kvshare.py`](kvshare.py#L53), [`tests/test_sharing.py`](tests/test_sharing.py#L46) |
+| Consumer adaptation | [Consumer-only self-distillation](#technique-consumer-distillation) | [`kvshare.py`](kvshare.py#L165), [`kvshare.py`](kvshare.py#L177) |
+| Quality and storage reporting | [Teacher-forced metrics and Pareto filtering](#technique-metrics-pareto) | [`kvshare.py`](kvshare.py#L96), [`kvshare.py`](kvshare.py#L187) |
+| Native quantized cache study | [Native HQQ cache candidates](#technique-native-hqq); [Paired prefill and decode evaluation](#technique-hqq-evaluation); [Mean gates and storage-based selection](#technique-hqq-gates); [Frozen selection and confirmatory tail](#technique-hqq-confirmation); [Receipt provenance and recomputation](#technique-hqq-provenance) | [`kvshare.py`](kvshare.py#L119), [`tools/quantized_metrics.py`](tools/quantized_metrics.py#L171), [`tools/check_hqq_receipts.py`](tools/check_hqq_receipts.py#L127) |
+| Local verification | [Bounded driver execution](#technique-bounded-driver) | [`tools/verify.py`](tools/verify.py), [verification skill](.agents/skills/verify-kv-cache-sharing/SKILL.md) |
+
+<a id="technique-linear-cka"></a>
+
+<details>
+<summary>Gram-form linear CKA</summary>
+
+**Mechanism.** `cka` casts both activation matrices to double precision, centers each feature, forms sample-by-sample Gram matrices, and divides their inner product by their Frobenius norms. A zero denominator returns zero. Calibration flattens post-RoPE K and V separately, removes padded rows, and scores the pair with the lower of the two CKA values.
+
+**Example.** `score = min(cka(consumer_k, producer_k), cka(consumer_v, producer_v))` after flattening tokens and heads.
+
+**Why here.** Gram form compares relationships between token samples without constructing a feature-by-feature matrix for wide KV heads.
+
+**Tradeoffs.** It stores sample-by-sample matrices and yields zero for degenerate inputs. It measures activation similarity on supplied calibration tokens, not task quality.
+
+**Code and ownership.** [`cka`](kvshare.py#L19) and activation scoring in [`calibrate`](kvshare.py#L128). `cka` is an original extension; PyTorch supplies tensor operations.
+
+</details>
+
+<a id="technique-greedy-recalibration"></a>
+
+<details>
+<summary>Greedy recalibration with capacity checks</summary>
+
+**Mechanism.** For each requested pair, `calibrate` reruns the current shared model, scores unused adjacent pairs, and chooses the highest minimum K/V score. Before scoring a candidate, it counts disjoint adjacent pairs remaining in each free run and skips candidates that would make the requested map impossible. It then updates the map and repeats on the changed student path.
+
+**Example.** With four layers and two pairs, selecting `1 → 0` reserves those layers and leaves `3 → 2` available; a candidate that strands the final requested pair is skipped.
+
+**Why here.** Later choices reflect earlier sharing decisions, while the capacity check prevents greedy choices from underfilling a dense request.
+
+**Tradeoffs.** Each selection reruns the model and computes all remaining scores. This is a greedy calibration procedure, not a global search or held-out quality guarantee.
+
+**Code and ownership.** [`calibrate`](kvshare.py#L128), with `groupby` capacity counting at lines 144–148. Original extension over PyTorch and Transformers.
+
+</details>
+
+<a id="technique-map-validation"></a>
+
+<details>
+<summary>Adjacent-map validation</summary>
+
+**Mechanism.** `validate_map` requires integer consumer and producer indices, exactly one layer of separation, and in-range indices. It also rejects any layer used as both consumer and producer and any producer with multiple consumers. `Sharing` validates before patching attention methods.
+
+**Example.** `{1: 0, 3: 2}` is a valid two-pair map; `{2: 0}` and `{1: 0, 2: 1}` fail because the first is nonadjacent and the second forms a chain.
+
+**Why here.** Adjacent independent pairs make the producer cache entry unambiguous and prevent a consumer from feeding another shared consumer.
+
+**Tradeoffs.** The validator deliberately excludes arbitrary graphs, chains, and fan-out even if a different cache-routing design could support them.
+
+**Code and ownership.** [`validate_map`](kvshare.py#L28), called by [`Sharing.__init__`](kvshare.py#L37). Original extension.
+
+</details>
+
+<a id="technique-patch-lifecycle"></a>
+
+<details>
+<summary>Reversible attention patching</summary>
+
+**Mechanism.** `Sharing` saves each attention module's bound `forward`, installs a bound adapter with `MethodType`, and registers a model pre-forward hook that clears per-forward routing state. `close` restores every saved method, removes the hook, and clears state. Callers use `try/finally` around patched evaluation and training.
+
+**Example.** `route = Sharing(model, mapping); try: logits = model(...); finally: route.close()`.
+
+**Why here.** The adapter changes the existing model instance temporarily while leaving model serialization and the ordinary forward path intact after cleanup.
+
+**Tradeoffs.** The patch targets the pinned Qwen3 eager-attention API. A caller that fails to close the route leaves the model patched; concurrent use of one patched model is not isolated.
+
+**Code and ownership.** [`Sharing.__init__`](kvshare.py#L35), [`Sharing._forward`](kvshare.py#L50), [`Sharing.close`](kvshare.py#L89); lifecycle checks in [`test_no_share_parity`](tests/test_sharing.py#L30). Original adapter using Transformers APIs.
+
+</details>
+
+<a id="technique-cache-aliasing"></a>
+
+<details>
+<summary>Shared cache storage aliasing</summary>
+
+**Mechanism.** A consumer still computes its query, but retrieves K/V tensors saved by its producer in per-forward state. It skips consumer K/V projections and, when a cache is supplied, assigns the producer's layer object into the consumer slot. The producer therefore owns the update and both entries refer to the same cache state. `unique_cache_bytes` deduplicates storage pointers across supported cache tensors.
+
+**Example.** With `{1: 0}`, `cache.layers[1] is cache.layers[0]`; the tests check this through prefill and incremental decode.
+
+**Why here.** Reusing the actual cache objects measures persistent KV tensor storage removed by sharing without copying the values.
+
+**Tradeoffs.** Consumer K/V weights remain loaded. Byte totals cover unique cache tensor storage, not model weights, temporaries, allocator reserve, or whole-process GPU memory. Cache implementations outside the tested DynamicCache path remain unverified.
+
+**Code and ownership.** Routing in [`Sharing._forward`](kvshare.py#L53), storage counting in [`unique_cache_bytes`](kvshare.py#L96), and alias checks in [`test_cache_alias_and_prefill_decode`](tests/test_sharing.py#L61). Original adapter over Transformers DynamicCache.
+
+</details>
+
+<a id="technique-window-mask"></a>
+
+<details>
+<summary>Consumer window-mask ablation</summary>
+
+**Mechanism.** For mapped consumers only, the adapter builds a causal local mask by masking keys older than the query's configured window, then adds it to the existing attention mask. It does not truncate the producer cache. Query rows use their absolute position within the current cache, so prefill and decode use the same history rule.
+
+**Example.** With `window=8`, a consumer query at cache position 20 may attend to positions 13 through 20; earlier cached keys stay stored but are masked.
+
+**Why here.** The experiment compares a consumer-history ablation while holding the shared producer cache intact.
+
+**Tradeoffs.** The full producer cache remains allocated, so the window adds no storage reduction. It changes consumer context and can change logits. The mask is an experimental extension, not a reported KVAlign method.
+
+**Code and ownership.** Window validation in [`Sharing.__init__`](kvshare.py#L37), mask construction in [`Sharing._forward`](kvshare.py#L75), and [`test_window_and_pareto`](tests/test_sharing.py#L117). Original extension.
+
+</details>
+
+<a id="technique-consumer-distillation"></a>
+
+<details>
+<summary>Consumer-only self-distillation</summary>
+
+**Mechanism.** `trainable_consumers` freezes the model, then enables query projection and query norm, both block layer norms, and the MLP for selected consumer layers. The frozen teacher produces target logits and a hidden state. `distill_loss` combines temperature-scaled teacher-to-student KL with weighted hidden-state MSE and masks padding. The experiment clips gradients and updates only those parameters.
+
+**Example.** `T² KL(teacher || student) + 0.1 × hidden_MSE`, with `T=2`; producer and teacher parameters remain frozen.
+
+**Why here.** The student can adapt selected consumers to the shared K/V representation without changing the producer or the rest of the model.
+
+**Tradeoffs.** The trainable subset still includes full consumer MLPs and normalization parameters. Training on fixed fixtures does not establish generated-text quality or broad task preservation.
+
+**Code and ownership.** [`trainable_consumers`](kvshare.py#L165), [`distill_loss`](kvshare.py#L177), and [`experiment`](kvshare.py#L207). Original training setup using PyTorch optimizers and operations.
+
+</details>
+
+<a id="technique-metrics-pareto"></a>
+
+<details>
+<summary>Teacher-forced metrics and Pareto filtering</summary>
+
+**Mechanism.** `metrics` runs fixed input IDs, computes teacher KL over valid positions, next-token cross entropy over valid shifted targets, argmax agreement, and unique cache storage. `pareto` marks a row dominated only when another row uses no more unique cache bytes and has no greater teacher KL, with at least one strict improvement.
+
+**Example.** Candidate A is removed from the frontier if candidate B has fewer cache bytes and lower KL; NLL and token agreement are reported but do not affect this two-axis frontier.
+
+**Why here.** Fixed-token comparisons make the effects of maps and training directly measurable against a frozen reference.
+
+**Tradeoffs.** Teacher-forced token scores do not measure sampled rollouts, downstream answers, speed, or total GPU memory. The Pareto marker covers cache bytes and KL alone.
+
+**Code and ownership.** [`metrics`](kvshare.py#L187), [`pareto`](kvshare.py#L199), and cache accounting in [`unique_cache_bytes`](kvshare.py#L96). Original measurement logic using PyTorch.
+
+</details>
+
+<a id="technique-native-hqq"></a>
+
+<details>
+<summary>Native HQQ cache candidates</summary>
+
+**Mechanism.** The separate study compares identity `DynamicCache` with Transformers `QuantizedCache` using the HQQ backend at 8 and 4 bits, fixed key/value axes, group size 64, and residual length 32. HQQ quantizes cache values during inference; this code does not train a new quantizer. Candidate cache state records quantized layers and actual persistent tensor storage.
+
+**Example.** `new_hqq_cache(config, 8)` creates the registered 8-bit policy; unsupported bit widths raise `ValueError`.
+
+**Why here.** Keeping quantization in a separate native-cache path lets the study compare it without mixing results with layer-sharing changes.
+
+**Tradeoffs.** HQQ is a separately locked optional dependency. Quantized behavior and cache payload depend on its runtime implementation; candidate quality must pass the study gates.
+
+**Code and ownership.** [`new_hqq_cache`](kvshare.py#L119), [`POLICY_CONFIG`](tools/quantized_metrics.py#L27), and [`_cache_state`](tools/quantized_metrics.py#L135). Cache implementation is dependency-owned by Transformers and HQQ; policy selection and measurement are original extensions.
+
+</details>
+
+<a id="technique-hqq-evaluation"></a>
+
+<details>
+<summary>Paired prefill and decode evaluation</summary>
+
+**Mechanism.** `evaluate_batch` runs the same four 128-token blocks through a teacher identity cache and a candidate cache. It prefills 64 tokens, then performs 64 single-token updates. It accumulates whole-block and decode-phase NLL, teacher KL and token agreement per example, and samples actual unique storage at lengths 64, 95, 96, 97, 127, and 128. Storage remains a whole-batch total; per-sequence values are marked derived.
+
+**Example.** For one block, whole NLL uses 127 next-token targets; decode NLL uses 63 targets from positions 64–126.
+
+**Why here.** The split reports full-context and incremental behavior while exercising the real cache through both prefill and decode.
+
+**Tradeoffs.** The scheduled fixed tokens measure teacher-forced behavior. They do not measure sampled generation or throughput. Batch-total bytes are sensitive to the exact batch shape.
+
+**Code and ownership.** [`evaluate_batch`](tools/quantized_metrics.py#L171), [`_measure_pair`](tools/quantized_metrics.py#L156), and batched-vs-single tests in [`test_quantized_metrics.py`](tests/test_quantized_metrics.py#L161). Original study using Transformers caches.
+
+</details>
+
+<a id="technique-hqq-gates"></a>
+
+<details>
+<summary>Mean gates and storage-based selection</summary>
+
+**Mechanism.** `summarize` recomputes means and spread from per-block rows and verifies cache snapshots. `passes_gate` requires finite means at or below 0.02 for whole-block NLL increase, whole KL, decode NLL increase, and decode KL. `choose_policy` chooses the passing non-identity policy with lowest actual 128-token batch storage only when it saves bytes versus identity; otherwise it chooses identity.
+
+**Example.** An HQQ4 candidate with lower storage is rejected if its mean decode KL is 0.02001, even when its whole-block metrics pass.
+
+**Why here.** Requiring all four mean limits prevents one phase's quality from hiding another phase's drift, and storage only decides among candidates that pass.
+
+**Tradeoffs.** Mean thresholds can hide individual block failures; per-block rows and min/max are retained. These fixed engineering gates do not establish statistical or downstream equivalence.
+
+**Code and ownership.** [`summarize`](tools/quantized_metrics.py#L280), [`passes_gate`](tools/quantized_metrics.py#L338), [`choose_policy`](tools/quantized_metrics.py#L361), and gate tests in [`test_quantized_metrics.py`](tests/test_quantized_metrics.py#L192). Original study policy.
+
+</details>
+
+<a id="technique-hqq-confirmation"></a>
+
+<details>
+<summary>Frozen selection and confirmatory tail</summary>
+
+**Mechanism.** Validation compares identity, HQQ8, and HQQ4 on blocks `[0,128)`. Selection recomputes metrics from block receipts and freezes the decision with a SHA-256 digest. Confirmation checks that digest and runtime identity, audits prior receipts and started batch attempts for overlap, then evaluates the selected policy on `[128,384)`. Attempt IDs are fsynced before each batch's first model forward.
+
+**Example.** If a confirmatory batch started on IDs 128–131 and then failed, a retry cannot treat those same IDs as unseen data.
+
+**Why here.** The validation decision stays separate from its confirmatory tail, and interrupted work cannot silently reopen already exposed examples.
+
+**Tradeoffs.** The audit depends on durable local receipts and fresh output directories. A started attempt is treated as exposed even if no complete metric row exists.
+
+**Code and ownership.** [`run_validate`](tools/quantized_metrics.py#L389), [`run_select`](tools/quantized_metrics.py#L548), [`_audit_unopened_tail`](tools/quantized_metrics.py#L576), [`record_batch_attempt`](tools/quantized_metrics.py#L608), and [`run_confirmatory`](tools/quantized_metrics.py#L618). Original workflow.
+
+</details>
+
+<a id="technique-hqq-provenance"></a>
+
+<details>
+<summary>Receipt provenance and recomputation</summary>
+
+**Mechanism.** The HQQ workflow pins dataset revision and source file hashes, checks prepared validation files and the model snapshot, records source and runtime identities, and hashes block and summary receipts. The checker reloads raw receipts, recomputes aggregates and selection, validates confirmatory identity, and rejects altered or inconsistent receipt chains.
+
+**Example.** Changing the selected bit width or a cache-byte aggregate fails selection verification even if the edited file is rehashed, because the choice is recomputed from block rows.
+
+**Why here.** The study has separate validation and confirmation actions, so its provenance must bind data, code, model, runtime, and reported metrics together.
+
+**Tradeoffs.** Hashes detect changes relative to the recorded inputs; they do not prove the upstream model or dataset is scientifically representative. The study is explicitly limited to the pinned validation split.
+
+**Code and ownership.** [`load_validation`](tools/quantized_metrics.py#L101), [`read_validation_receipts`](tools/quantized_metrics.py#L456), [`verify_frozen_selection`](tools/quantized_metrics.py#L523), [`check_receipts`](tools/check_hqq_receipts.py#L127). Original receipt protocol.
+
+</details>
+
+<a id="technique-bounded-driver"></a>
+
+<details>
+<summary>Bounded driver execution</summary>
+
+**Mechanism.** The maintained verification driver exposes doctor and CPU-drive checks plus an explicit pretrained action. It runs commands as bounded child processes and saves stdout, stderr, exit status, and elapsed time as evidence. The pretrained path uses local pinned weights and does not download them implicitly.
+
+**Example.** `python tools/verify.py drive` runs the CPU fixture path; `python tools/verify.py pretrained` requires the prepared local model snapshot.
+
+**Why here.** The commands keep local correctness checks repeatable and make real-model execution explicit.
+
+**Tradeoffs.** The pretrained action needs exclusive CUDA access and locally prepared weights. A timeout remains a failure receipt, not a pass.
+
+**Code and ownership.** [`tools/verify.py`](tools/verify.py), [`verify-kv-cache-sharing`](.agents/skills/verify-kv-cache-sharing/SKILL.md), and CPU behavior tests in [`test_sharing.py`](tests/test_sharing.py). Original driver over standard-library subprocesses and project test tools.
 
 </details>
 
