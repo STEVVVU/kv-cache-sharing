@@ -15,6 +15,574 @@ An executable implementation of adjacent inter-layer KV sharing and consumer-onl
 
 ## Architecture and execution guide
 
+<!-- execution-flow:start -->
+### Execution flow
+
+Start with the primary path, then expand a detailed workflow. Select a numbered node to see its operation, implementation techniques, and source. Solid arrows show the named control, data, or lifecycle handoff; dotted arrows show error paths. Separate entry points are named in each workflow.
+
+<a id="review-walkthrough"></a>
+
+#### Walk through one concrete example
+
+Run greedy recalibration for a small supported number of adjacent KV-sharing pairs on the local teacher and student fixtures.
+
+**Trace.** [Load pinned local experiment](#flow-step-experiment) → [Recompute and score adjacent pairs](#flow-step-calibrate) → [Choose pair and recalibrate](#flow-step-choose-pair) → [Measure baseline and sharing policies](#flow-step-policies) → [Adapt only consumer parameters](#flow-step-train) → [Write checkpoint and Pareto report](#flow-step-report) → [Restore attention methods](#flow-step-close).
+
+**Result and boundary.** The experiment recalibrates adjacent sharing choices, compares policies, adapts only the selected consumer parameters, and writes checkpoint and Pareto data before restoring patched attention. The detailed routing flow explains producer K/V reuse. The separate HQQ study uses its own CLI and persisted receipts.
+
+<details>
+<summary>Implementation decisions to explain</summary>
+
+**Why score candidate pairs with the minimum of K and V CKA?** Using the weaker of the two activation similarities avoids choosing a pair that looks good for only keys or values; greedy recalibration is locally informed and does not claim a globally optimal pairing.
+
+[Gram-form linear CKA](#technique-linear-cka) · [Greedy recalibration with capacity checks](#technique-greedy-recalibration).
+
+**Why restore patched attention methods in a finally block?** Restoration runs on both success and error exits, limiting the patch lifetime to the experiment; it cannot undo unrelated model state changes.
+
+[Reversible attention patching](#technique-patch-lifecycle).
+
+</details>
+
+#### Primary execution flow
+
+The kvshare experiment CLI performs sharing calibration, policy comparison, and consumer distillation. Native HQQ and verification are separate entrypoints detailed below.
+
+```mermaid
+flowchart TD
+    n1["1. Load pinned local experiment"]
+    click n1 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-experiment" "Open step, techniques, and source" _top
+    n2["2. Recompute and score adjacent<br/>pairs"]
+    click n2 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-calibrate" "Open step, techniques, and source" _top
+    n3["3. Choose pair and recalibrate"]
+    click n3 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-choose-pair" "Open step, techniques, and source" _top
+    n4["4. Measure baseline and sharing<br/>policies"]
+    click n4 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-policies" "Open step, techniques, and source" _top
+    n11["11. Adapt only consumer<br/>parameters"]
+    click n11 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-train" "Open step, techniques, and source" _top
+    n12["12. Abort bounded distillation"]
+    click n12 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-train-error" "Open step, techniques, and source" _top
+    n13["13. Write checkpoint and Pareto<br/>report"]
+    click n13 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-report" "Open step, techniques, and source" _top
+    n9["9. Restore attention methods"]
+    click n9 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-close" "Open step, techniques, and source" _top
+    n1 -->|"Call calibrate with student and<br/>calibration split"| n2
+    n2 -->|"Score eligible adjacent pairs before<br/>max selection"| n3
+    n3 -->|"More pairs requested: forward updated<br/>shared model"| n2
+    n3 -->|"Calibration returns mapping and<br/>history"| n4
+    n4 -->|"Policy comparison finishes before<br/>trainable consumer setup"| n11
+    n11 -.->|"Budget exceeded or loss non-finite"| n12
+    n11 -->|"Optimizer steps complete"| n13
+    n13 -->|"Training finally restores route"| n9
+    n12 -->|"Exception unwinds training finally"| n9
+```
+
+**Detailed workflows.** [Patched attention and cache routing](#flow-workflow-routing) · [Teacher-forced cache metrics](#flow-workflow-metrics) · [Independent native HQQ validation and selection](#flow-workflow-hqq-selection) · [Frozen confirmation on an unopened tail](#flow-workflow-hqq-confirmation) · [Independent offline publication checker](#flow-workflow-publication-check) · [Independent maintained verification driver](#flow-workflow-verification).
+
+<a id="flow-workflow-routing"></a>
+
+<details>
+<summary>Patched attention and cache routing</summary>
+
+Sharing is called by calibration, policy evaluation, and distillation. Layer routing branches on membership in the validated map.
+
+```mermaid
+flowchart TD
+    n5["5. Validate and patch attention"]
+    click n5 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-patch" "Open step, techniques, and source" _top
+    n10["10. Reject invalid routing input"]
+    click n10 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-map-error" "Open step, techniques, and source" _top
+    n6["6. Produce and cache K/V"]
+    click n6 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-producer" "Open step, techniques, and source" _top
+    n7["7. Reuse producer K/V and cache<br/>layer"]
+    click n7 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-consumer" "Open step, techniques, and source" _top
+    n8["8. Apply optional consumer<br/>window"]
+    click n8 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-attention" "Open step, techniques, and source" _top
+    n9["9. Restore attention methods"]
+    click n9 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-close" "Open step, techniques, and source" _top
+    n5 -.->|"Topology or window validation fails"| n10
+    n5 -->|"Patched forward encounters an unmapped<br/>layer"| n6
+    n5 -->|"Patched forward encounters a mapped<br/>consumer"| n7
+    n6 -->|"Adjacent producer publishes K/V<br/>consumed from route.states"| n7
+    n6 -->|"Unmapped layer publishes states then<br/>attends"| n8
+    n7 -->|"Consumer alias setup precedes mask and<br/>attention"| n8
+    n8 -->|"Caller closes route after model work<br/>in finally"| n9
+```
+
+</details>
+
+<a id="flow-workflow-metrics"></a>
+
+<details>
+<summary>Teacher-forced cache metrics</summary>
+
+The experiment evaluates heldout inputs against previously computed teacher logits, then marks the quality/storage Pareto frontier.
+
+```mermaid
+flowchart TD
+    n4["4. Measure baseline and sharing<br/>policies"]
+    click n4 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-policies" "Open step, techniques, and source" _top
+    n14["14. Count unique tensor storage"]
+    click n14 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-cache-bytes" "Open step, techniques, and source" _top
+    n13["13. Write checkpoint and Pareto<br/>report"]
+    click n13 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-report" "Open step, techniques, and source" _top
+    n4 -->|"metrics counts result.past_key_values<br/>storage"| n14
+    n14 -->|"Returned metric rows feed pareto in<br/>the experiment report"| n13
+```
+
+</details>
+
+<a id="flow-workflow-hqq-selection"></a>
+
+<details>
+<summary>Independent native HQQ validation and selection</summary>
+
+validate and select are separate CLI actions connected by persisted validation receipts. No Sharing hook or optimizer participates.
+
+```mermaid
+flowchart TD
+    n15["15. Start native HQQ validation"]
+    click n15 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-validate" "Open step, techniques, and source" _top
+    n16["16. Construct paired native<br/>caches"]
+    click n16 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-factory" "Open step, techniques, and source" _top
+    n17["17. Forward paired 64-token<br/>prefill"]
+    click n17 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-prefill" "Open step, techniques, and source" _top
+    n18["18. Run 64 paired cache updates"]
+    click n18 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-decode" "Open step, techniques, and source" _top
+    n19["19. Aggregate fixed batches and<br/>gates"]
+    click n19 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-summary" "Open step, techniques, and source" _top
+    n20["20. Publish complete validation<br/>receipts"]
+    click n20 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-validation-receipt" "Open step, techniques, and source" _top
+    n21["21. Recompute and freeze policy<br/>selection"]
+    click n21 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-select" "Open step, techniques, and source" _top
+    n25["25. Preserve partial study<br/>failure"]
+    click n25 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-study-error" "Open step, techniques, and source" _top
+    n15 -->|"Each evaluate_batch constructs fresh<br/>teacher and candidate caches"| n16
+    n16 -->|"Caches are supplied to paired prefill<br/>calls"| n17
+    n17 -->|"Prefill measurements precede token<br/>update loop"| n18
+    n18 -->|"Advance to next token until position<br/>127"| n18
+    n18 -->|"Completed batch rows accumulate before<br/>per-policy summarize"| n19
+    n19 -->|"Write aggregate and hashed candidate<br/>receipt"| n20
+    n20 -->|"next policy starts its first batch"| n16
+    n20 -->|"Separate select action reads complete<br/>persisted validation receipts"| n21
+    n15 -.->|"Validation exception records error and<br/>final resource receipt"| n25
+    n21 -.->|"Receipt validation or selection fails"| n25
+    n18 -->|"next batch of the same policy"| n16
+```
+
+</details>
+
+<a id="flow-workflow-hqq-confirmation"></a>
+
+<details>
+<summary>Frozen confirmation on an unopened tail</summary>
+
+confirmatory is a separate action requiring selection.json and its digest. The selected policy reuses the paired evaluation path, without reselecting.
+
+```mermaid
+flowchart TD
+    n22["22. Verify frozen selection and<br/>tail"]
+    click n22 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-confirm" "Open step, techniques, and source" _top
+    n23["23. Fsync planned confirmatory<br/>IDs"]
+    click n23 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-attempt" "Open step, techniques, and source" _top
+    n16["16. Construct paired native<br/>caches"]
+    click n16 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-factory" "Open step, techniques, and source" _top
+    n17["17. Forward paired 64-token<br/>prefill"]
+    click n17 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-prefill" "Open step, techniques, and source" _top
+    n18["18. Run 64 paired cache updates"]
+    click n18 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-decode" "Open step, techniques, and source" _top
+    n19["19. Aggregate fixed batches and<br/>gates"]
+    click n19 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-summary" "Open step, techniques, and source" _top
+    n24["24. Publish confirmatory result"]
+    click n24 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-confirmation-receipt" "Open step, techniques, and source" _top
+    n25["25. Preserve partial study<br/>failure"]
+    click n25 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-study-error" "Open step, techniques, and source" _top
+    n22 -->|"Bindings and freshness pass before<br/>planned IDs are recorded"| n23
+    n23 -->|"Fsync completes before evaluate_batch"| n16
+    n16 -->|"Evaluate selected candidate against<br/>fresh identity cache"| n17
+    n17 -->|"Follow the fixed cache-fed update<br/>schedule"| n18
+    n18 -->|"More tail batches: persist next batch<br/>IDs before forward"| n23
+    n18 -->|"All rows and fixed coverage checks<br/>precede summarize"| n19
+    n19 -->|"Write fixed-tail metrics and receipt<br/>hashes"| n24
+    n22 -.->|"Digest, freshness, runtime, or<br/>model/data binding fails"| n25
+    n18 -.->|"Forward, cache, numerical or resource<br/>guard exception propagates"| n25
+```
+
+</details>
+
+<a id="flow-workflow-publication-check"></a>
+
+<details>
+<summary>Independent offline publication checker</summary>
+
+The checker consumes an existing published bundle. It does not launch validation, confirmation, or a model.
+
+```mermaid
+flowchart TD
+    n26["26. Check published receipt<br/>bundle"]
+    click n26 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-checker" "Open step, techniques, and source" _top
+    n27["27. Recompute published decision<br/>and ordering"]
+    click n27 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-recompute" "Open step, techniques, and source" _top
+    n26 -->|"After canonical/raw reconstruction<br/>call check_raw_receipts"| n27
+```
+
+</details>
+
+<a id="flow-workflow-verification"></a>
+
+<details>
+<summary>Independent maintained verification driver</summary>
+
+Doctor, CPU fixture tests, and pretrained are explicit alternatives. Evidence survives child completion or timeout.
+
+```mermaid
+flowchart TD
+    n28["28. Choose maintained<br/>verification command"]
+    click n28 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-verify" "Open step, techniques, and source" _top
+    n30["30. Exercise mechanism tests"]
+    click n30 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-fixtures" "Open step, techniques, and source" _top
+    n1["1. Load pinned local experiment"]
+    click n1 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-experiment" "Open step, techniques, and source" _top
+    n29["29. Record child exit or timeout"]
+    click n29 href "https://github.com/STEVVVU/kv-cache-sharing#flow-step-driver-result" "Open step, techniques, and source" _top
+    n28 -->|"drive selects unittest discovery child"| n30
+    n28 -->|"pretrained selects python -m kvshare<br/>experiment child"| n1
+    n28 -->|"doctor child completes or any child<br/>times out"| n29
+    n30 -->|"Capture unittest child exit and<br/>stdout/stderr"| n29
+    n1 -->|"Capture pretrained child exit and<br/>stdout/stderr"| n29
+```
+
+</details>
+
+#### Steps, techniques, and source
+
+These source traces cover the active scope below. They explain implementation behavior; benchmark results and their limits remain in the measurement sections.
+
+<a id="flow-step-experiment"></a>
+
+##### 1. Load pinned local experiment
+
+**Component.** kvshare.py. Load the local pinned Qwen3 teacher and a copied student, tokenize separate fixture splits, and obtain heldout teacher logits and baseline generation.
+
+Entry, output, or failure handling connects the implemented algorithm stages.
+
+**Source.** [`kvshare.py:207`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L207). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-calibrate"></a>
+
+##### 2. Recompute and score adjacent pairs
+
+**Component.** kvshare.py. Reject counts outside topology capacity. Forward the current shared student, exclude used layers and choices that prevent filling the remaining map, then compute centered Gram-form CKA for masked K and V activations.
+
+**Techniques at this step.** [Gram-form linear CKA](#technique-linear-cka) · [Greedy recalibration with capacity checks](#technique-greedy-recalibration).
+
+**Source.** [`kvshare.py:128`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L128). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-choose-pair"></a>
+
+##### 3. Choose pair and recalibrate
+
+**Component.** kvshare.py. Choose the maximum tuple scored by the minimum K/V CKA, update the consumer map and history, and repeat a forward for each requested pair. The finally block restores attention methods.
+
+**Techniques at this step.** [Greedy recalibration with capacity checks](#technique-greedy-recalibration) · [Reversible attention patching](#technique-patch-lifecycle).
+
+**Source.** [`kvshare.py:156`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L156). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-policies"></a>
+
+##### 4. Measure baseline and sharing policies
+
+**Component.** kvshare.py. Measure independent, uniform, calibrated, and window-8 policies against heldout teacher logits. Each policy route closes in finally.
+
+**Techniques at this step.** [Teacher-forced metrics and Pareto filtering](#technique-metrics-pareto) · [Reversible attention patching](#technique-patch-lifecycle).
+
+**Source.** [`kvshare.py:230`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L230). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-patch"></a>
+
+##### 5. Validate and patch attention
+
+**Component.** kvshare.py. Reject nonadjacent or out-of-range maps, chains, producer fan-out, and invalid windows. Save original methods, clear per-forward states with a pre-hook, and replace each attention forward.
+
+**Techniques at this step.** [Adjacent-map validation](#technique-map-validation) · [Reversible attention patching](#technique-patch-lifecycle).
+
+**Source.** [`kvshare.py:37`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L37). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-producer"></a>
+
+##### 6. Produce and cache K/V
+
+**Component.** kvshare.py. Unmapped layers project K/V, apply rotary embeddings, and update the supplied native cache when present. Publish the resulting K/V in this forward's states.
+
+**Techniques at this step.** [Shared cache storage aliasing](#technique-cache-aliasing).
+
+**Source.** [`kvshare.py:67`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L67). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-consumer"></a>
+
+##### 7. Reuse producer K/V and cache layer
+
+**Component.** kvshare.py. Mapped consumers read producer K/V and rotate their own queries. With a supplied cache, append or replace the consumer entry with the producer layer object, bypassing consumer K/V projections.
+
+**Techniques at this step.** [Shared cache storage aliasing](#technique-cache-aliasing).
+
+**Source.** [`kvshare.py:59`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L59). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-attention"></a>
+
+##### 8. Apply optional consumer window
+
+**Component.** kvshare.py. For mapped consumers with a window, add a local history mask without truncating producer storage. Run eager attention and the output projection.
+
+**Techniques at this step.** [Consumer window-mask ablation](#technique-window-mask).
+
+**Source.** [`kvshare.py:75`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L75). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-close"></a>
+
+##### 9. Restore attention methods
+
+**Component.** kvshare.py. Restore saved forwards, remove the pre-hook, and clear route states.
+
+**Techniques at this step.** [Reversible attention patching](#technique-patch-lifecycle).
+
+**Source.** [`kvshare.py:89`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L89). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-map-error"></a>
+
+##### 10. Reject invalid routing input
+
+**Component.** kvshare.py. Raise ValueError before installing the patch for unsupported topology or window values.
+
+**Techniques at this step.** [Adjacent-map validation](#technique-map-validation).
+
+**Source.** [`kvshare.py:28`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L28). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-train"></a>
+
+##### 11. Adapt only consumer parameters
+
+**Component.** kvshare.py. Freeze the model and enable consumer query projection, query norm, layer norms, and MLP parameters. Run frozen-teacher targets and student predictions, optimize masked temperature-scaled KL plus hidden-state MSE with clipped gradients.
+
+**Techniques at this step.** [Consumer-only self-distillation](#technique-consumer-distillation).
+
+**Source.** [`kvshare.py:238`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L238). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-train-error"></a>
+
+##### 12. Abort bounded distillation
+
+**Component.** kvshare.py. Raise on a 540-second budget violation or non-finite loss. The training try/finally closes the route.
+
+**Techniques at this step.** [Consumer-only self-distillation](#technique-consumer-distillation) · [Reversible attention patching](#technique-patch-lifecycle).
+
+**Source.** [`kvshare.py:250`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L250). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-report"></a>
+
+##### 13. Write checkpoint and Pareto report
+
+**Component.** kvshare.py. Evaluate the distilled student, generate a sample, assert parameter change and frozen teacher gradients, and save trainable consumer weights. Mark nondominated cache-byte versus teacher-KL policies and write the JSON report.
+
+**Techniques at this step.** [Teacher-forced metrics and Pareto filtering](#technique-metrics-pareto) · [Consumer-only self-distillation](#technique-consumer-distillation).
+
+**Source.** [`kvshare.py:264`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L264). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-cache-bytes"></a>
+
+##### 14. Count unique tensor storage
+
+**Component.** kvshare.py. Traverse explicit native cache and nested quantized payload fields, deduplicate storage by device, pointer, and size, and sum bytes. This measures cache storage rather than process memory.
+
+**Techniques at this step.** [Shared cache storage aliasing](#technique-cache-aliasing) · [Teacher-forced metrics and Pareto filtering](#technique-metrics-pareto).
+
+**Source.** [`kvshare.py:96`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/kvshare.py#L96). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-validate"></a>
+
+##### 15. Start native HQQ validation
+
+**Component.** tools/quantized_metrics.py. Create a fresh output directory and running receipt. Guard resources, load the local model and hash-checked prepared validation dataset, and run identity, HQQ8, and HQQ4 over blocks 0 through 127 in batches of four.
+
+**Techniques at this step.** [Frozen selection and confirmatory tail](#technique-hqq-confirmation) · [Receipt provenance and recomputation](#technique-hqq-provenance).
+
+**Source.** [`tools/quantized_metrics.py:389`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/quantized_metrics.py#L389). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-factory"></a>
+
+##### 16. Construct paired native caches
+
+**Component.** tools/quantized_metrics.py. Use fresh DynamicCache for the teacher and identity candidate, or the fixed native Transformers HQQ 4-bit or 8-bit policy for the candidate. HQQ uses axis 1, group size 64, and residual length 32.
+
+**Techniques at this step.** [Native HQQ cache candidates](#technique-native-hqq).
+
+**Source.** [`tools/quantized_metrics.py:122`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/quantized_metrics.py#L122). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-prefill"></a>
+
+##### 17. Forward paired 64-token prefill
+
+**Component.** tools/quantized_metrics.py. Supply each fresh cache explicitly to the same frozen model for teacher and candidate prefill. Verify that the returned cache is the supplied object and snapshot length 64.
+
+**Techniques at this step.** [Paired prefill and decode evaluation](#technique-hqq-evaluation).
+
+**Source.** [`tools/quantized_metrics.py:220`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/quantized_metrics.py#L220). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-decode"></a>
+
+##### 18. Run 64 paired cache updates
+
+**Component.** tools/quantized_metrics.py. Feed the same prepared token to teacher and candidate at positions 64 through 127. Accumulate paired teacher-forced quality and inspect native cache lengths, quantized state, and unique storage at the fixed snapshot boundaries.
+
+**Techniques at this step.** [Paired prefill and decode evaluation](#technique-hqq-evaluation) · [Native HQQ cache candidates](#technique-native-hqq).
+
+**Source.** [`tools/quantized_metrics.py:228`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/quantized_metrics.py#L228). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-summary"></a>
+
+##### 19. Aggregate fixed batches and gates
+
+**Component.** tools/quantized_metrics.py. Validate block uniqueness, fixed batch indexing, finite metrics, and consistent cache receipts. Compute mean whole and decode NLL increases and teacher KL, require all four values at most 0.02, and retain whole-batch cache bytes.
+
+**Techniques at this step.** [Mean gates and storage-based selection](#technique-hqq-gates).
+
+**Source.** [`tools/quantized_metrics.py:280`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/quantized_metrics.py#L280). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-validation-receipt"></a>
+
+##### 20. Publish complete validation receipts
+
+**Component.** tools/quantized_metrics.py. Flush completed rows and update coverage after each batch. Write candidate aggregates and their hashes, then mark validation complete only after all policies finish.
+
+**Techniques at this step.** [Receipt provenance and recomputation](#technique-hqq-provenance).
+
+**Source.** [`tools/quantized_metrics.py:428`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/quantized_metrics.py#L428). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-select"></a>
+
+##### 21. Recompute and freeze policy selection
+
+**Component.** tools/quantized_metrics.py. In a separate CLI action, validate complete receipt hashes, recompute summaries and the shared teacher baseline, then choose the least length-128 storage among passing HQQ candidates that save bytes. If none qualify, choose identity and freeze decision bindings in selection.json.
+
+**Techniques at this step.** [Mean gates and storage-based selection](#technique-hqq-gates) · [Frozen selection and confirmatory tail](#technique-hqq-confirmation) · [Receipt provenance and recomputation](#technique-hqq-provenance).
+
+**Source.** [`tools/quantized_metrics.py:548`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/quantized_metrics.py#L548). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-confirm"></a>
+
+##### 22. Verify frozen selection and tail
+
+**Component.** tools/quantized_metrics.py. In a separate CLI action, verify the supplied selection digest and replay the validation decision. Scan prior block and attempt receipts for confirmatory IDs, then require matching model, prepared data, provenance, and runtime before forwarding.
+
+**Techniques at this step.** [Frozen selection and confirmatory tail](#technique-hqq-confirmation) · [Receipt provenance and recomputation](#technique-hqq-provenance).
+
+**Source.** [`tools/quantized_metrics.py:618`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/quantized_metrics.py#L618). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-attempt"></a>
+
+##### 23. Fsync planned confirmatory IDs
+
+**Component.** tools/quantized_metrics.py. Immediately before each selected-policy batch forward, append its block IDs to the attempts receipt, flush, and fsync. Prior attempts taint those IDs even when no completed rows exist.
+
+**Techniques at this step.** [Frozen selection and confirmatory tail](#technique-hqq-confirmation) · [Receipt provenance and recomputation](#technique-hqq-provenance).
+
+**Source.** [`tools/quantized_metrics.py:608`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/quantized_metrics.py#L608). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-confirmation-receipt"></a>
+
+##### 24. Publish confirmatory result
+
+**Component.** tools/quantized_metrics.py. Require exactly 256 blocks and 64 batches from IDs 128 through 383, summarize the selected policy, and write hashed rows and metrics. Completion reports the frozen choice without selecting another policy.
+
+**Techniques at this step.** [Frozen selection and confirmatory tail](#technique-hqq-confirmation) · [Receipt provenance and recomputation](#technique-hqq-provenance).
+
+**Source.** [`tools/quantized_metrics.py:679`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/quantized_metrics.py#L679). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-study-error"></a>
+
+##### 25. Preserve partial study failure
+
+**Component.** tools/quantized_metrics.py. The action catches BaseException, records error type and message, re-raises, and writes final timing and resource information in finally. Validation and selection likewise retain error receipts; no automatic retry is implemented.
+
+**Techniques at this step.** [Receipt provenance and recomputation](#technique-hqq-provenance).
+
+**Source.** [`tools/quantized_metrics.py:690`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/quantized_metrics.py#L690). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-checker"></a>
+
+##### 26. Check published receipt bundle
+
+**Component.** tools/check_hqq_receipts.py. This independent offline CLI verifies current source bindings, the fixed receipt manifest, LF canonical hashes, and reconstructed original CRLF hashes in a temporary directory.
+
+**Techniques at this step.** [Receipt provenance and recomputation](#technique-hqq-provenance).
+
+**Source.** [`tools/check_hqq_receipts.py:127`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/check_hqq_receipts.py#L127). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-recompute"></a>
+
+##### 27. Recompute published decision and ordering
+
+**Component.** tools/check_hqq_receipts.py. Recompute validation and confirmatory summaries and selection, verify identity bindings, fixed coverage and selection digest, then validate freeze timestamps and all 64 attempt records. Return a compact result and remove temporary reconstructed files.
+
+**Techniques at this step.** [Receipt provenance and recomputation](#technique-hqq-provenance).
+
+**Source.** [`tools/check_hqq_receipts.py:40`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/check_hqq_receipts.py#L40). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-verify"></a>
+
+##### 28. Choose maintained verification command
+
+**Component.** tools/verify.py. The independent verification driver maps doctor to dependency inspection, drive to unittest discovery, and pretrained to the bounded kvshare experiment CLI.
+
+**Techniques at this step.** [Bounded driver execution](#technique-bounded-driver).
+
+**Source.** [`tools/verify.py:15`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/verify.py#L15). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-driver-result"></a>
+
+##### 29. Record child exit or timeout
+
+**Component.** tools/verify.py. Run the chosen child with captured output and a subprocess timeout. Save command, exit status, output or timeout error and elapsed time, then exit with the recorded status.
+
+**Techniques at this step.** [Bounded driver execution](#technique-bounded-driver).
+
+**Source.** [`tools/verify.py:22`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tools/verify.py#L22). [Back to execution flow](#execution-flow).
+
+<a id="flow-step-fixtures"></a>
+
+##### 30. Exercise mechanism tests
+
+**Component.** tests/test_sharing.py. Verification uses tiny Qwen3 fixtures to inspect parity, alias storage, causal prefill/decode, padding isolation, map capacity, and frozen parameter boundaries. Quantized tests separately exercise gates, receipt tampering, and optional real CPU HQQ schedules.
+
+**Techniques at this step.** [Bounded driver execution](#technique-bounded-driver).
+
+**Source.** [`tests/test_sharing.py:8`](https://github.com/STEVVVU/kv-cache-sharing/blob/master/tests/test_sharing.py#L8). [Back to execution flow](#execution-flow).
+
+<details>
+<summary>Scope and subsystem coverage</summary>
+
+Active kvshare experiment, sharing/calibration/distillation and metrics, independent native HQQ validation/select/confirmatory CLI, offline publication checker, and maintained verification driver.
+
+- **Similarity and selection.** Mapped steps trace the actual source calls, state changes, and branches for this subsystem. [Step 2](#flow-step-calibrate), [Step 3](#flow-step-choose-pair).
+- **Map validation and patch lifecycle.** Mapped steps trace the actual source calls, state changes, and branches for this subsystem. [Step 5](#flow-step-patch), [Step 10](#flow-step-map-error), [Step 9](#flow-step-close).
+- **Shared cache routing and mask ablation.** Mapped steps trace the actual source calls, state changes, and branches for this subsystem. [Step 6](#flow-step-producer), [Step 7](#flow-step-consumer), [Step 8](#flow-step-attention), [Step 14](#flow-step-cache-bytes).
+- **Consumer adaptation and teacher-forced metrics.** Mapped steps trace the actual source calls, state changes, and branches for this subsystem. [Step 11](#flow-step-train), [Step 12](#flow-step-train-error), [Step 4](#flow-step-policies), [Step 13](#flow-step-report).
+- **Native HQQ cache candidate evaluation.** Mapped steps trace the actual source calls, state changes, and branches for this subsystem. [Step 16](#flow-step-factory), [Step 17](#flow-step-prefill), [Step 18](#flow-step-decode), [Step 19](#flow-step-summary), [Step 21](#flow-step-select).
+- **HQQ validation, confirmation, and provenance.** Mapped steps trace the actual source calls, state changes, and branches for this subsystem. [Step 15](#flow-step-validate), [Step 20](#flow-step-validation-receipt), [Step 21](#flow-step-select), [Step 22](#flow-step-confirm), [Step 23](#flow-step-attempt), [Step 24](#flow-step-confirmation-receipt), [Step 25](#flow-step-study-error), [Step 26](#flow-step-checker), [Step 27](#flow-step-recompute).
+- **Verification driver.** Mapped steps trace the actual source calls, state changes, and branches for this subsystem. [Step 28](#flow-step-verify), [Step 30](#flow-step-fixtures), [Step 29](#flow-step-driver-result).
+
+Outside this flow audit:
+
+- `tools/trainer_metrics.py`. Separate Trainer/WikiText study lies outside this ledger's active sharing and native HQQ paths.
+- `docs/evidence/`. Generated receipts are checker inputs, not implementation sources.
+- `requirements*.txt and requirements*.lock`. Dependency manifests do not implement runtime flow.
+
+</details>
+
+<!-- execution-flow:end -->
+
+<details>
+<summary>Subsystem technique index</summary>
+
 ### Subsystem map
 
 Select a subsystem in the diagram to open its techniques, tradeoffs, and code references. The numbered links provide the same navigation. This map groups components; the execution diagrams show their runtime flow.
@@ -49,6 +617,8 @@ flowchart LR
 This project has two real-model paths. `Sharing` patches adjacent attention consumers and aliases actual Transformers cache objects; calibration selects a map and optional distillation trains consumer parameters. The separate HQQ study uses Transformers' native quantized cache. A [producer layer](#producer-layer) supplies K/V; a [consumer layer](#consumer-layer) reuses it.
 
 The top-level flow separates patched sharing from native HQQ measurements.
+
+</details>
 
 <details>
 <summary>Expand flow diagram 1</summary>
