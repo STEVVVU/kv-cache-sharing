@@ -15,9 +15,43 @@ An executable implementation of adjacent inter-layer KV sharing and consumer-onl
 
 ## Architecture and execution guide
 
+### Subsystem map
+
+Select a subsystem in the diagram to open its techniques, tradeoffs, and code references. The numbered links provide the same navigation. This map groups components; the execution diagrams show their runtime flow.
+
+```mermaid
+flowchart LR
+  system["KV cache sharing"]
+  system --> s1["1. Similarity and selection"]
+  click s1 href "https://github.com/STEVVVU/kv-cache-sharing#subsystem-similarity-and-selection" "Explore Similarity and selection" _top
+  system --> s2["2. Map validation and patch<br/>lifecycle"]
+  click s2 href "https://github.com/STEVVVU/kv-cache-sharing#subsystem-map-validation-and-patch-lifecycle" "Explore Map validation and patch lifecycle" _top
+  system --> s3["3. Shared cache routing and mask<br/>ablation"]
+  click s3 href "https://github.com/STEVVVU/kv-cache-sharing#subsystem-shared-cache-routing-and-mask-ablation" "Explore Shared cache routing and mask ablation" _top
+  system --> s4["4. Consumer adaptation and<br/>teacher-forced metrics"]
+  click s4 href "https://github.com/STEVVVU/kv-cache-sharing#subsystem-consumer-adaptation-and-teacher-forced-metrics" "Explore Consumer adaptation and teacher-forced metrics" _top
+  system --> s5["5. Native HQQ cache candidate<br/>evaluation"]
+  click s5 href "https://github.com/STEVVVU/kv-cache-sharing#subsystem-native-hqq-cache-candidate-evaluation" "Explore Native HQQ cache candidate evaluation" _top
+  system --> s6["6. HQQ validation, confirmation,<br/>and provenance"]
+  click s6 href "https://github.com/STEVVVU/kv-cache-sharing#subsystem-hqq-validation-confirmation-and-provenance" "Explore HQQ validation, confirmation, and provenance" _top
+  system --> s7["7. Verification driver"]
+  click s7 href "https://github.com/STEVVVU/kv-cache-sharing#subsystem-verification-driver" "Explore Verification driver" _top
+```
+
+1. [Similarity and selection](#subsystem-similarity-and-selection)
+2. [Map validation and patch lifecycle](#subsystem-map-validation-and-patch-lifecycle)
+3. [Shared cache routing and mask ablation](#subsystem-shared-cache-routing-and-mask-ablation)
+4. [Consumer adaptation and teacher-forced metrics](#subsystem-consumer-adaptation-and-teacher-forced-metrics)
+5. [Native HQQ cache candidate evaluation](#subsystem-native-hqq-cache-candidate-evaluation)
+6. [HQQ validation, confirmation, and provenance](#subsystem-hqq-validation-confirmation-and-provenance)
+7. [Verification driver](#subsystem-verification-driver)
+
 This project has two real-model paths. `Sharing` patches adjacent attention consumers and aliases actual Transformers cache objects; calibration selects a map and optional distillation trains consumer parameters. The separate HQQ study uses Transformers' native quantized cache. A [producer layer](#producer-layer) supplies K/V; a [consumer layer](#consumer-layer) reuses it.
 
 The top-level flow separates patched sharing from native HQQ measurements.
+
+<details>
+<summary>Expand flow diagram 1</summary>
 
 ```mermaid
 flowchart LR
@@ -30,7 +64,12 @@ flowchart LR
   N7["Logits and cache metrics"] --> N8["Experiment receipts"]
 ```
 
+</details>
+
 Calibration recomputes student activations after each selected pair. The sharing flow rejects invalid maps and `close` restores the original attention methods.
+
+<details>
+<summary>Expand flow diagram 2</summary>
 
 ```mermaid
 flowchart TD
@@ -50,6 +89,8 @@ flowchart TD
   N11["Invalid map"] --> N12["Raise ValueError"]
   N13["close"] --> N14["Restore original forward"]
 ```
+
+</details>
 
 | Subsystem | Responsibility and owned state | Source |
 | --- | --- | --- |
@@ -124,6 +165,9 @@ A teacher-forced metric scores fixed tokens instead of sampled text. The HQQ rep
 
 This section explains mechanisms on the active sharing and native HQQ study paths. Rationale is inferred from current code; the study uses fixed-token teacher-forced measurements and does not promise generated-text quality or total GPU memory savings.
 
+<details>
+<summary>Full technique index</summary>
+
 | Subsystem | Technique cards | Code |
 | --- | --- | --- |
 | Activation similarity and map selection | [Gram-form linear CKA](#technique-linear-cka); [Greedy recalibration with capacity checks](#technique-greedy-recalibration) | [`kvshare.py`](kvshare.py#L19), [`kvshare.py`](kvshare.py#L128) |
@@ -133,6 +177,20 @@ This section explains mechanisms on the active sharing and native HQQ study path
 | Quality and storage reporting | [Teacher-forced metrics and Pareto filtering](#technique-metrics-pareto) | [`kvshare.py`](kvshare.py#L96), [`kvshare.py`](kvshare.py#L187) |
 | Native quantized cache study | [Native HQQ cache candidates](#technique-native-hqq); [Paired prefill and decode evaluation](#technique-hqq-evaluation); [Mean gates and storage-based selection](#technique-hqq-gates); [Frozen selection and confirmatory tail](#technique-hqq-confirmation); [Receipt provenance and recomputation](#technique-hqq-provenance) | [`kvshare.py`](kvshare.py#L119), [`tools/quantized_metrics.py`](tools/quantized_metrics.py#L171), [`tools/check_hqq_receipts.py`](tools/check_hqq_receipts.py#L127) |
 | Local verification | [Bounded driver execution](#technique-bounded-driver) | [`tools/verify.py`](tools/verify.py), [verification skill](.agents/skills/verify-kv-cache-sharing/SKILL.md) |
+
+</details>
+
+<a id="subsystem-similarity-and-selection"></a>
+
+### 1. Similarity and selection
+
+[Back to the subsystem map](#architecture-and-execution-guide).
+
+**Code.** [`kvshare.py`](kvshare.py), [`tests/test_sharing.py`](tests/test_sharing.py).
+
+**Techniques.** [Gram-form linear CKA](#technique-linear-cka), [Greedy recalibration with capacity checks](#technique-greedy-recalibration).
+
+**Related concepts.** [linear CKA](#linear-cka).
 
 <a id="technique-linear-cka"></a>
 
@@ -148,6 +206,10 @@ This section explains mechanisms on the active sharing and native HQQ study path
 **Tradeoffs.** It stores sample-by-sample matrices and yields zero for degenerate inputs. It measures activation similarity on supplied calibration tokens, not task quality.
 
 **Code and ownership.** [`cka`](kvshare.py#L19) and activation scoring in [`calibrate`](kvshare.py#L128). `cka` is an original extension; PyTorch supplies tensor operations.
+
+
+
+**Used in.** [Similarity and selection](#subsystem-similarity-and-selection). [Back to the subsystem map](#architecture-and-execution-guide).
 
 </details>
 
@@ -166,7 +228,21 @@ This section explains mechanisms on the active sharing and native HQQ study path
 
 **Code and ownership.** [`calibrate`](kvshare.py#L128), with `groupby` capacity counting at lines 144–148. Original extension over PyTorch and Transformers.
 
+
+
+**Used in.** [Similarity and selection](#subsystem-similarity-and-selection). [Back to the subsystem map](#architecture-and-execution-guide).
+
 </details>
+
+<a id="subsystem-map-validation-and-patch-lifecycle"></a>
+
+### 2. Map validation and patch lifecycle
+
+[Back to the subsystem map](#architecture-and-execution-guide).
+
+**Code.** [`kvshare.py`](kvshare.py), [`tests/test_sharing.py`](tests/test_sharing.py).
+
+**Techniques.** [Adjacent-map validation](#technique-map-validation), [Reversible attention patching](#technique-patch-lifecycle).
 
 <a id="technique-map-validation"></a>
 
@@ -182,6 +258,10 @@ This section explains mechanisms on the active sharing and native HQQ study path
 **Tradeoffs.** The validator deliberately excludes arbitrary graphs, chains, and fan-out even if a different cache-routing design could support them.
 
 **Code and ownership.** [`validate_map`](kvshare.py#L28), called by [`Sharing.__init__`](kvshare.py#L37). Original extension.
+
+
+
+**Used in.** [Map validation and patch lifecycle](#subsystem-map-validation-and-patch-lifecycle). [Back to the subsystem map](#architecture-and-execution-guide).
 
 </details>
 
@@ -200,7 +280,23 @@ This section explains mechanisms on the active sharing and native HQQ study path
 
 **Code and ownership.** [`Sharing.__init__`](kvshare.py#L35), [`Sharing._forward`](kvshare.py#L50), [`Sharing.close`](kvshare.py#L89); lifecycle checks in [`test_no_share_parity`](tests/test_sharing.py#L30). Original adapter using Transformers APIs.
 
+
+
+**Used in.** [Map validation and patch lifecycle](#subsystem-map-validation-and-patch-lifecycle). [Back to the subsystem map](#architecture-and-execution-guide).
+
 </details>
+
+<a id="subsystem-shared-cache-routing-and-mask-ablation"></a>
+
+### 3. Shared cache routing and mask ablation
+
+[Back to the subsystem map](#architecture-and-execution-guide).
+
+**Code.** [`kvshare.py`](kvshare.py), [`tests/test_sharing.py`](tests/test_sharing.py).
+
+**Techniques.** [Shared cache storage aliasing](#technique-cache-aliasing), [Consumer window-mask ablation](#technique-window-mask).
+
+**Related concepts.** [DynamicCache](#dynamic-cache).
 
 <a id="technique-cache-aliasing"></a>
 
@@ -216,6 +312,10 @@ This section explains mechanisms on the active sharing and native HQQ study path
 **Tradeoffs.** Consumer K/V weights remain loaded. Byte totals cover unique cache tensor storage, not model weights, temporaries, allocator reserve, or whole-process GPU memory. Cache implementations outside the tested DynamicCache path remain unverified.
 
 **Code and ownership.** Routing in [`Sharing._forward`](kvshare.py#L53), storage counting in [`unique_cache_bytes`](kvshare.py#L96), and alias checks in [`test_cache_alias_and_prefill_decode`](tests/test_sharing.py#L61). Original adapter over Transformers DynamicCache.
+
+
+
+**Used in.** [Shared cache routing and mask ablation](#subsystem-shared-cache-routing-and-mask-ablation). [Back to the subsystem map](#architecture-and-execution-guide).
 
 </details>
 
@@ -234,7 +334,23 @@ This section explains mechanisms on the active sharing and native HQQ study path
 
 **Code and ownership.** Window validation in [`Sharing.__init__`](kvshare.py#L37), mask construction in [`Sharing._forward`](kvshare.py#L75), and [`test_window_and_pareto`](tests/test_sharing.py#L117). Original extension.
 
+
+
+**Used in.** [Shared cache routing and mask ablation](#subsystem-shared-cache-routing-and-mask-ablation). [Back to the subsystem map](#architecture-and-execution-guide).
+
 </details>
+
+<a id="subsystem-consumer-adaptation-and-teacher-forced-metrics"></a>
+
+### 4. Consumer adaptation and teacher-forced metrics
+
+[Back to the subsystem map](#architecture-and-execution-guide).
+
+**Code.** [`kvshare.py`](kvshare.py), [`tests/test_sharing.py`](tests/test_sharing.py).
+
+**Techniques.** [Consumer-only self-distillation](#technique-consumer-distillation), [Teacher-forced metrics and Pareto filtering](#technique-metrics-pareto).
+
+**Related concepts.** [consumer layer](#consumer-layer), [teacher-forced metric](#teacher-forced-metric).
 
 <a id="technique-consumer-distillation"></a>
 
@@ -250,6 +366,10 @@ This section explains mechanisms on the active sharing and native HQQ study path
 **Tradeoffs.** The trainable subset still includes full consumer MLPs and normalization parameters. Training on fixed fixtures does not establish generated-text quality or broad task preservation.
 
 **Code and ownership.** [`trainable_consumers`](kvshare.py#L165), [`distill_loss`](kvshare.py#L177), and [`experiment`](kvshare.py#L207). Original training setup using PyTorch optimizers and operations.
+
+
+
+**Used in.** [Consumer adaptation and teacher-forced metrics](#subsystem-consumer-adaptation-and-teacher-forced-metrics). [Back to the subsystem map](#architecture-and-execution-guide).
 
 </details>
 
@@ -268,7 +388,23 @@ This section explains mechanisms on the active sharing and native HQQ study path
 
 **Code and ownership.** [`metrics`](kvshare.py#L187), [`pareto`](kvshare.py#L199), and cache accounting in [`unique_cache_bytes`](kvshare.py#L96). Original measurement logic using PyTorch.
 
+
+
+**Used in.** [Consumer adaptation and teacher-forced metrics](#subsystem-consumer-adaptation-and-teacher-forced-metrics). [Back to the subsystem map](#architecture-and-execution-guide).
+
 </details>
+
+<a id="subsystem-native-hqq-cache-candidate-evaluation"></a>
+
+### 5. Native HQQ cache candidate evaluation
+
+[Back to the subsystem map](#architecture-and-execution-guide).
+
+**Code.** [`kvshare.py`](kvshare.py), [`tools/quantized_metrics.py`](tools/quantized_metrics.py), [`tests/test_quantized_metrics.py`](tests/test_quantized_metrics.py).
+
+**Techniques.** [Native HQQ cache candidates](#technique-native-hqq), [Paired prefill and decode evaluation](#technique-hqq-evaluation), [Mean gates and storage-based selection](#technique-hqq-gates).
+
+**Related concepts.** [DynamicCache](#dynamic-cache).
 
 <a id="technique-native-hqq"></a>
 
@@ -284,6 +420,10 @@ This section explains mechanisms on the active sharing and native HQQ study path
 **Tradeoffs.** HQQ is a separately locked optional dependency. Quantized behavior and cache payload depend on its runtime implementation; candidate quality must pass the study gates.
 
 **Code and ownership.** [`new_hqq_cache`](kvshare.py#L119), [`POLICY_CONFIG`](tools/quantized_metrics.py#L27), and [`_cache_state`](tools/quantized_metrics.py#L135). Cache implementation is dependency-owned by Transformers and HQQ; policy selection and measurement are original extensions.
+
+
+
+**Used in.** [Native HQQ cache candidate evaluation](#subsystem-native-hqq-cache-candidate-evaluation). [Back to the subsystem map](#architecture-and-execution-guide).
 
 </details>
 
@@ -302,6 +442,10 @@ This section explains mechanisms on the active sharing and native HQQ study path
 
 **Code and ownership.** [`evaluate_batch`](tools/quantized_metrics.py#L171), [`_measure_pair`](tools/quantized_metrics.py#L156), and batched-vs-single tests in [`test_quantized_metrics.py`](tests/test_quantized_metrics.py#L161). Original study using Transformers caches.
 
+
+
+**Used in.** [Native HQQ cache candidate evaluation](#subsystem-native-hqq-cache-candidate-evaluation). [Back to the subsystem map](#architecture-and-execution-guide).
+
 </details>
 
 <a id="technique-hqq-gates"></a>
@@ -319,7 +463,21 @@ This section explains mechanisms on the active sharing and native HQQ study path
 
 **Code and ownership.** [`summarize`](tools/quantized_metrics.py#L280), [`passes_gate`](tools/quantized_metrics.py#L338), [`choose_policy`](tools/quantized_metrics.py#L361), and gate tests in [`test_quantized_metrics.py`](tests/test_quantized_metrics.py#L192). Original study policy.
 
+
+
+**Used in.** [Native HQQ cache candidate evaluation](#subsystem-native-hqq-cache-candidate-evaluation). [Back to the subsystem map](#architecture-and-execution-guide).
+
 </details>
+
+<a id="subsystem-hqq-validation-confirmation-and-provenance"></a>
+
+### 6. HQQ validation, confirmation, and provenance
+
+[Back to the subsystem map](#architecture-and-execution-guide).
+
+**Code.** [`tools/quantized_metrics.py`](tools/quantized_metrics.py), [`tools/check_hqq_receipts.py`](tools/check_hqq_receipts.py), [`tests/test_quantized_metrics.py`](tests/test_quantized_metrics.py).
+
+**Techniques.** [Frozen selection and confirmatory tail](#technique-hqq-confirmation), [Receipt provenance and recomputation](#technique-hqq-provenance).
 
 <a id="technique-hqq-confirmation"></a>
 
@@ -335,6 +493,10 @@ This section explains mechanisms on the active sharing and native HQQ study path
 **Tradeoffs.** The audit depends on durable local receipts and fresh output directories. A started attempt is treated as exposed even if no complete metric row exists.
 
 **Code and ownership.** [`run_validate`](tools/quantized_metrics.py#L389), [`run_select`](tools/quantized_metrics.py#L548), [`_audit_unopened_tail`](tools/quantized_metrics.py#L576), [`record_batch_attempt`](tools/quantized_metrics.py#L608), and [`run_confirmatory`](tools/quantized_metrics.py#L618). Original workflow.
+
+
+
+**Used in.** [HQQ validation, confirmation, and provenance](#subsystem-hqq-validation-confirmation-and-provenance). [Back to the subsystem map](#architecture-and-execution-guide).
 
 </details>
 
@@ -353,7 +515,21 @@ This section explains mechanisms on the active sharing and native HQQ study path
 
 **Code and ownership.** [`load_validation`](tools/quantized_metrics.py#L101), [`read_validation_receipts`](tools/quantized_metrics.py#L456), [`verify_frozen_selection`](tools/quantized_metrics.py#L523), [`check_receipts`](tools/check_hqq_receipts.py#L127). Original receipt protocol.
 
+
+
+**Used in.** [HQQ validation, confirmation, and provenance](#subsystem-hqq-validation-confirmation-and-provenance). [Back to the subsystem map](#architecture-and-execution-guide).
+
 </details>
+
+<a id="subsystem-verification-driver"></a>
+
+### 7. Verification driver
+
+[Back to the subsystem map](#architecture-and-execution-guide).
+
+**Code.** [`tools/verify.py`](tools/verify.py), [`.agents/skills/verify-kv-cache-sharing/SKILL.md`](.agents/skills/verify-kv-cache-sharing/SKILL.md), [`tests/test_sharing.py`](tests/test_sharing.py).
+
+**Techniques.** [Bounded driver execution](#technique-bounded-driver).
 
 <a id="technique-bounded-driver"></a>
 
@@ -369,6 +545,10 @@ This section explains mechanisms on the active sharing and native HQQ study path
 **Tradeoffs.** The pretrained action needs exclusive CUDA access and locally prepared weights. A timeout remains a failure receipt, not a pass.
 
 **Code and ownership.** [`tools/verify.py`](tools/verify.py), [`verify-kv-cache-sharing`](.agents/skills/verify-kv-cache-sharing/SKILL.md), and CPU behavior tests in [`test_sharing.py`](tests/test_sharing.py). Original driver over standard-library subprocesses and project test tools.
+
+
+
+**Used in.** [Verification driver](#subsystem-verification-driver). [Back to the subsystem map](#architecture-and-execution-guide).
 
 </details>
 
